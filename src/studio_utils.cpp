@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mx/gl.h>
-#include <GL/glu.h>
+//#include <GL/glu.h>
 #include "StudioModel.h"
 
 

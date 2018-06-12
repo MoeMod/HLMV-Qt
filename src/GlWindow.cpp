@@ -21,7 +21,6 @@
 #include <mx/mxPcx.h>
 #include <mx/mxBmp.h>
 #include <mx/gl.h>
-#include <GL/glu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -41,7 +40,24 @@ GlWindow *g_GlWindow = 0;
 vec3_t g_vright = { 50, 50, 0 };		// needs to be set to viewer's right in order for chrome to work
 float g_lambert = 1.5;
 
+// Replaces gluPerspective. Sets the frustum to perspective mode.
+// fovY     - Field of vision in degrees in the y direction
+// aspect   - Aspect ratio of the viewport
+// zNear    - The near clipping distance
+// zFar     - The far clipping distance
+void perspectiveGL( GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFar )
+{
+	const GLdouble pi = 3.1415926535897932384626433832795;
+	GLdouble fW, fH;
 
+	fH = tan( (fovY / 2) / 180 * pi ) * zNear;
+
+	fH = tan( fovY / 360 * pi ) * zNear;
+
+	fW = fH * aspect;
+
+	glFrustum( -fW, fW, -fH, fH, zNear, zFar );
+}
 
 GlWindow::GlWindow (mxWindow *parent, int x, int y, int w, int h, const char *label, int style)
 : mxGlWindow (parent, x, y, w, h, label, style)
@@ -419,7 +435,7 @@ GlWindow::draw ()
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
-	gluPerspective (65.0f, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
+	perspectiveGL (65.0f, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
 
 	glMatrixMode (GL_MODELVIEW);
 	glPushMatrix ();
