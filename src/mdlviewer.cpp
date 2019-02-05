@@ -34,9 +34,9 @@ extern bool bFilterTextures;
 
 
 
-MDLViewer *g_MDLViewer = 0;
-char g_appTitle[] = "Half-Life Model Viewer v1.25";
-static char recentFiles[8][256] = { "", "", "", "", "", "", "", "" };
+MDLViewer *g_MDLViewer;
+const char *g_appTitle = "Half-Life Model Viewer v1.25";
+static char recentFiles[8][256];
 
 
 
@@ -122,7 +122,7 @@ swap3dfxgl (bool b)
 
 	return (ret == TRUE);
 #else
-	return TRUE;
+	return true;
 #endif
 }
 

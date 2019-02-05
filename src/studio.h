@@ -136,16 +136,12 @@ typedef struct
 	vec3_t				bbmax;		
 } mstudiobbox_t;
 
-#ifndef ZONE_H
-typedef void *cache_user_t;
-#endif
-
 // demand loaded sequence groups
 typedef struct
 {
 	char				label[32];	// textual name
 	char				name[64];	// file name
-	cache_user_t		cache;		// cache index pointer
+	int		cache;		// cache index pointer
 	int					data;		// hack for group 0
 } mstudioseqgroup_t;
 

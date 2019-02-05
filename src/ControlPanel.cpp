@@ -27,7 +27,7 @@
 
 
 
-extern char g_appTitle[];
+extern const char *g_appTitle;
 
 
 
@@ -35,9 +35,9 @@ bool swap3dfxgl (bool b);
 
 
 
-ControlPanel *g_ControlPanel = 0;
-bool g_bStopPlaying = false;
-static int g_nCurrFrame = 0;
+ControlPanel *g_ControlPanel;
+bool g_bStopPlaying;
+static int g_nCurrFrame;
 
 
 

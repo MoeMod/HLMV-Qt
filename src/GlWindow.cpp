@@ -31,7 +31,7 @@
 
 
 
-extern char g_appTitle[];
+extern const char *g_appTitle;
 extern bool g_bStopPlaying;
 
 

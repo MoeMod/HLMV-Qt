@@ -94,7 +94,7 @@ public:
 
 
 extern MDLViewer *g_MDLViewer;
-extern char g_appTitle[];
+extern const char *g_appTitle;
 
 
 

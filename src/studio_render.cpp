@@ -14,6 +14,7 @@
 #include <mx/gl.h>
 #include "StudioModel.h"
 #include "ViewerSettings.h"
+#include <string.h>
 
 #pragma warning( disable : 4244 ) // double to float
 
@@ -103,7 +104,7 @@ void StudioModel::CalcBoneQuaternion( int frame, float s, mstudiobone_t *pbone, 
 
 	for (j = 0; j < 3; j++)
 	{
-		if (panim->offset[j+3] == 0)
+		if (!panim && panim->offset[j+3] == 0)
 		{
 			angle2[j] = angle1[j] = pbone->value[j+3]; // default;
 		}
@@ -111,10 +112,19 @@ void StudioModel::CalcBoneQuaternion( int frame, float s, mstudiobone_t *pbone, 
 		{
 			panimvalue = (mstudioanimvalue_t *)((byte *)panim + panim->offset[j+3]);
 			k = frame;
+
+			// Debug
+			if (panimvalue->num.total < panimvalue->num.valid)
+				k = 0;
+
 			while (panimvalue->num.total <= k)
 			{
 				k -= panimvalue->num.total;
 				panimvalue += panimvalue->num.valid + 1;
+
+				// Debug
+				if( panimvalue->num.total < panimvalue->num.valid )
+					k = 0;
 			}
 			// Bah, missing blend!
 			if (panimvalue->num.valid > k)
@@ -177,16 +187,24 @@ void StudioModel::CalcBonePosition( int frame, float s, mstudiobone_t *pbone, ms
 	for (j = 0; j < 3; j++)
 	{
 		pos[j] = pbone->value[j]; // default;
-		if (panim->offset[j] != 0)
+		if (!panim || panim->offset[j] != 0)
 		{
 			panimvalue = (mstudioanimvalue_t *)((byte *)panim + panim->offset[j]);
 			
 			k = frame;
+
+			// Debug
+			if( panimvalue->num.total < panimvalue->num.valid )
+				k = 0;
 			// find span of values that includes the frame we want
 			while (panimvalue->num.total <= k)
 			{
 				k -= panimvalue->num.total;
 				panimvalue += panimvalue->num.valid + 1;
+
+				// Debug
+				if( panimvalue->num.total < panimvalue->num.valid )
+					k = 0;
 			}
 			// if we're inside the span
 			if (panimvalue->num.valid > k)
@@ -229,6 +247,19 @@ void StudioModel::CalcRotations ( vec3_t *pos, vec4_t *q, mstudioseqdesc_t *pseq
 	mstudiobone_t		*pbone;
 	float				s;
 
+	// bah, fix this bug with changing sequences too fast
+	if (f > pseqdesc->numframes - 1)
+	{
+		f = 0.0f;
+	}
+	else if (f < -0.01f)
+	{
+		// BUG ( somewhere else ) but this code should validate this data.
+		// This could cause a crash if the frame # is negative, so we'll go ahead
+		// and clamp it here
+		f = -0.01f;
+	}
+
 	frame = (int)f;
 	s = (f - frame);
 
@@ -258,7 +289,7 @@ mstudioanim_t * StudioModel::GetAnim( mstudioseqdesc_t *pseqdesc )
 
 	if (pseqdesc->seqgroup == 0)
 	{
-		return (mstudioanim_t *)((byte *)m_pstudiohdr + pseqgroup->data + pseqdesc->animindex);
+		return (mstudioanim_t *)((byte *)m_pstudiohdr + pseqdesc->animindex);
 	}
 
 	return (mstudioanim_t *)((byte *)m_panimhdr[pseqdesc->seqgroup] + pseqdesc->animindex);
