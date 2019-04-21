@@ -26,8 +26,6 @@
 
 
 StudioModel g_studioModel;
-bool bFilterTextures = true;
-
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -115,8 +113,8 @@ void StudioModel::UploadTexture(mstudiotexture_t *ptexture, byte *data, byte *pa
 	glBindTexture( GL_TEXTURE_2D, name ); //g_texnum );		
 	glTexImage2D( GL_TEXTURE_2D, 0, 3/*??*/, outwidth, outheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex );
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// ptexture->width = outwidth;
 	// ptexture->height = outheight;
@@ -574,10 +572,10 @@ int StudioModel::SetBodygroup( int iGroup, int iValue )
 
 int StudioModel::SetSkin( int iValue )
 {
-	if (!m_pstudiohdr)
+	if (!m_ptexturehdr)
 		return 0;
 
-	if (iValue >= m_pstudiohdr->numskinfamilies)
+	if (iValue >= m_ptexturehdr->numskinfamilies)
 	{
 		return m_skinnum;
 	}

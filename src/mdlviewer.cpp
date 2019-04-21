@@ -30,8 +30,6 @@
 
 
 
-extern bool bFilterTextures;
-
 
 
 MDLViewer *g_MDLViewer;
@@ -135,12 +133,12 @@ MDLViewer::MDLViewer ()
 	mb = new mxMenuBar (this);
 	mxMenu *menuFile = new mxMenu ();
 	mxMenu *menuOptions = new mxMenu ();
-	mxMenu *menuView = new mxMenu ();
+	mxMenu *menuTools = new mxMenu ();
 	mxMenu *menuHelp = new mxMenu ();
 
 	mb->addMenu ("File", menuFile);
 	mb->addMenu ("Options", menuOptions);
-	mb->addMenu ("View", menuView);
+	mb->addMenu ("Tools", menuTools);
 	mb->addMenu ("Help", menuHelp);
 
 	mxMenu *menuRecentModels = new mxMenu ();
@@ -162,39 +160,50 @@ MDLViewer::MDLViewer ()
 	menuFile->addSeparator ();
 	menuFile->add ("Unload Ground Texture", IDC_FILE_UNLOADGROUNDTEX);
 	menuFile->addSeparator ();
-	menuFile->add ("Open PAK file...", IDC_FILE_OPENPAKFILE);
-	menuFile->add ("Close PAK file", IDC_FILE_CLOSEPAKFILE);
+	menuFile->add ("Save Model As...", IDC_FILE_SAVEMODEL);
+	menuFile->addSeparator ();
+	menuFile->add ("Open Half-Life Package...", IDC_FILE_OPENPAKFILE);
+	menuFile->add ("Close Half-Life Package", IDC_FILE_CLOSEPAKFILE);
 	menuFile->addSeparator ();
 	menuFile->addMenu ("Recent Models", menuRecentModels);
-	menuFile->addMenu ("Recent PAK files", menuRecentPakFiles);
+	menuFile->addMenu ("Recent Package files", menuRecentPakFiles);
 	menuFile->addSeparator ();
 	menuFile->add ("Exit", IDC_FILE_EXIT);
 
 	menuOptions->add ("Background Color...", IDC_OPTIONS_COLORBACKGROUND);
 	menuOptions->add ("Ground Color...", IDC_OPTIONS_COLORGROUND);
 	menuOptions->add ("Light Color...", IDC_OPTIONS_COLORLIGHT);
-	menuOptions->addSeparator ();
-	menuOptions->add ("Filter Textures", IDC_OPTIONS_FILTERTEXTURES);
+	menuOptions->add ("Crosshair Color...", IDC_OPTIONS_COLORCROSSHAIR);
 	menuOptions->addSeparator ();
 	menuOptions->add ("Center View", IDC_OPTIONS_CENTERVIEW);
+	menuOptions->add ("Save View", IDC_OPTIONS_SAVEVIEW);
+	menuOptions->add ("Recall View", IDC_OPTIONS_RECALLVIEW);
 #ifdef WIN32
 	menuOptions->addSeparator ();
 	menuOptions->add ("Make Screenshot...", IDC_OPTIONS_MAKESCREENSHOT);
-	//menuOptions->add ("Dump Model Info", IDC_OPTIONS_DUMP);
+	menuOptions->add ("Dump Model Info", IDC_OPTIONS_DUMP);
 #endif
+	menuOptions->addSeparator ();
+	menuOptions->add ("File Associations...", IDC_OPTIONS_FILEASSOCIATIONS);
+	menuOptions->add ("Set Sound Folder...", IDC_OPTIONS_SOUNDFOLDER);
+	menuOptions->addSeparator ();
+	menuOptions->add ("Save Options...", IDC_OPTIONS_SAVE);
 
-	menuView->add ("File Associations...", IDC_VIEW_FILEASSOCIATIONS);
-
+	menuTools->add ("Configure Tools...", IDC_TOOLS_CONFIGURE);
+	menuTools->addSeparator ();
+	menuTools->add ("Decompile Model...", IDC_TOOLS_MODELDECOMPILE);
+	menuTools->add ("Compile Model...", IDC_TOOLS_MODELCOMPILE);
+	menuTools->add ("Edit QC File...", IDC_TOOLS_QCFILEEDIT);
 #ifdef WIN32
 	menuHelp->add ("Goto Homepage...", IDC_HELP_GOTOHOMEPAGE);
 	menuHelp->addSeparator ();
 #endif
+	menuHelp->add ("Keyboard Shortcuts...", IDC_HELP_KEYBOARDSHORCUTS);
+	menuHelp->addSeparator ();
 	menuHelp->add ("About...", IDC_HELP_ABOUT);
 
-	mb->setChecked (IDC_OPTIONS_FILTERTEXTURES, bFilterTextures);
-
 	// create the OpenGL window
-	d_GlWindow = new GlWindow (this, 0, 0, 0, 0, "", mxWindow::Normal);
+	d_GlWindow = new GlWindow (this, 0, 0, 0, 0, "glwindow", mxWindow::Normal);
 #ifdef WIN32
 	SetWindowLong ((HWND) d_GlWindow->getHandle (), GWL_EXSTYLE, WS_EX_CLIENTEDGE);
 #endif
@@ -274,6 +283,27 @@ MDLViewer::handleEvent (mxEvent *event)
 
 				initRecentFiles ();
 			}
+		}
+		break;
+
+		case IDC_FILE_SAVEMODEL:
+		{
+			const char *ptr = (char *) mxGetSaveFileName (this, "", "*.mdl");
+			if (!ptr)
+				break;
+
+			char filename[256];
+			char ext[16];
+
+			strcpy (filename, ptr);
+			strcpy (ext, mx_getextension (filename));
+			if (mx_strcasecmp (ext, ".mdl"))
+				strcat (filename, ".mdl");
+
+			if (!g_studioModel.SaveModel (filename))
+				mxMessageBox (this, "Error saving model.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
+			else
+				strcpy (g_viewerSettings.modelFile, filename);
 		}
 		break;
 
@@ -400,9 +430,11 @@ MDLViewer::handleEvent (mxEvent *event)
 		case IDC_OPTIONS_COLORBACKGROUND:
 		case IDC_OPTIONS_COLORGROUND:
 		case IDC_OPTIONS_COLORLIGHT:
+		case IDC_OPTIONS_COLORCROSSHAIR:
 		{
-			float *cols[3] = { g_viewerSettings.bgColor, g_viewerSettings.gColor, g_viewerSettings.lColor };
-			float *col = cols[event->action - IDC_OPTIONS_COLORBACKGROUND];
+			float *cols[4] = { g_viewerSettings.bgColor, g_viewerSettings.gColor, g_viewerSettings.lColor, g_viewerSettings.guColor };
+			int index = event->action - IDC_OPTIONS_COLORBACKGROUND;
+			float *col = cols[index];
 			int r = (int) (col[0] * 255.0f);
 			int g = (int) (col[1] * 255.0f);
 			int b = (int) (col[2] * 255.0f);
@@ -412,11 +444,27 @@ MDLViewer::handleEvent (mxEvent *event)
 				col[1] = (float) g / 255.0f;
 				col[2] = (float) b / 255.0f;
 			}
+
+			switch (index)
+			{
+			case 0:
+				d_GlWindow->loadTexture (0, 2);
+			case 1:
+				d_GlWindow->loadTexture (0, 1);
+                        }
 		}
 		break;
 
 		case IDC_OPTIONS_CENTERVIEW:
 			d_cpl->centerView ();
+			break;
+
+		case IDC_OPTIONS_SAVEVIEW:
+			d_cpl->saveView ();
+			break;
+
+		case IDC_OPTIONS_RECALLVIEW:
+			d_cpl->recallView ();
 			break;
 
 		case IDC_OPTIONS_MAKESCREENSHOT:
@@ -431,18 +479,11 @@ MDLViewer::handleEvent (mxEvent *event)
 		}
 		break;
 
-		case IDC_OPTIONS_FILTERTEXTURES:
-			bFilterTextures = !mb->isChecked (IDC_OPTIONS_FILTERTEXTURES);
-			mb->setChecked (IDC_OPTIONS_FILTERTEXTURES, bFilterTextures);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
-			break;
-
 		case IDC_OPTIONS_DUMP:
 			d_cpl->dumpModelInfo ();
 			break;
 
-		case IDC_VIEW_FILEASSOCIATIONS:
+		case IDC_OPTIONS_FILEASSOCIATIONS:
 			g_FileAssociation->setAssociation (0);
 			g_FileAssociation->setVisible (true);
 			break;
@@ -452,6 +493,37 @@ MDLViewer::handleEvent (mxEvent *event)
 			ShellExecute (0, "open", "http://www.swissquake.ch/chumbalum-soft/index.html", 0, 0, SW_SHOW);
 			break;
 #endif
+
+		case IDC_HELP_KEYBOARDSHORCUTS:
+			mxMessageBox (this,
+				"Keyboard Shortcuts:\n"
+				"\n"
+				"g: Toggle ground\n"
+				"m: Toggle mirror on ground\n"
+				"b: Toggle background\n"
+				"s: Toggle stencil buffer\n"
+				"h: Toggle hitboxes\n"
+				"c: Save camera position\n"
+				"r: Recall camera position\n"
+				"+: Increase animation speed\n"
+				"-: Decrease animation speed\n"
+				"1: Wireframe mode\n"
+				"2: Flatshaded mode\n"
+				"3: Smoothshaded mode\n"
+				"4: Textured mode\n"
+				"5: Less opaque\n"
+				"6: More opaque\n"
+				"ESC: quit fullscreen\n"
+				"\n"
+				"Mouse controls:\n"
+				"\n"
+				"Left-Click + Drag: Rotate model\n"
+				"Left-Click + Shift + Drag: Move model\n"
+				"Right-Click + Shift + Drag: Zoom model\n"
+				"Ctrl + Drag: Move lights\n",
+				"Keyboard Shortcuts",
+			MX_MB_OK | MX_MB_INFORMATION);
+			break;
 
 		case IDC_HELP_ABOUT:
 			mxMessageBox (this,

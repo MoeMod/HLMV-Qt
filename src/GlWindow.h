@@ -64,7 +64,7 @@ public:
 
 
 extern GlWindow *g_GlWindow;
-
+extern void	setupRenderMode ();
 
 
 #endif // INCLUDED_GLWINDOW

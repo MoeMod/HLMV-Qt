@@ -34,7 +34,6 @@ extern const char *g_appTitle;
 bool swap3dfxgl (bool b);
 
 
-
 ControlPanel *g_ControlPanel;
 bool g_bStopPlaying;
 static int g_nCurrFrame;
@@ -53,96 +52,184 @@ ControlPanel::ControlPanel (mxWindow *parent)
 #endif
 
 	mxWindow *wRender = new mxWindow (this, 0, 0, 0, 0);
-	tab->add (wRender, "Render");
-	cRenderMode = new mxChoice (wRender, 5, 5, 100, 22, IDC_RENDERMODE);
+	tab->add (wRender, "Model Display");
+	new mxLabel(wRender, 5, 3, 90, 18, "Render Mode");
+	cRenderMode = new mxChoice (wRender, 5, 17, 112, 22, IDC_RENDERMODE);
 	cRenderMode->add ("Wireframe");
-	cRenderMode->add ("Flatshaded");
-	cRenderMode->add ("Smoothshaded");
-	cRenderMode->add ("Textured");
+	cRenderMode->add ("Flat Shaded");
+	cRenderMode->add ("Smooth Shaded");
+	cRenderMode->add ("Texture Shaded");
 	cRenderMode->select (3);
 	mxToolTip::add (cRenderMode, "Select Render Mode");
-	slTransparency = new mxSlider (wRender, 5, 28, 100, 18, IDC_TRANSPARENCY);
+	slTransparency = new mxSlider (wRender, 0, 62, 120, 18, IDC_TRANSPARENCY);
+	slTransparency->setRange (0, 100);
 	slTransparency->setValue (100);
-	mxToolTip::add (slTransparency, "Model Transparency");
-	cbGround = new mxCheckBox (wRender, 110, 5, 150, 20, "Ground", IDC_GROUND);
-	cbMirror = new mxCheckBox (wRender, 110, 25, 150, 20, "Mirror Model On Ground", IDC_MIRROR);
-	cbBackground = new mxCheckBox (wRender, 110, 45, 150, 20, "Background", IDC_BACKGROUND);
-	mxCheckBox *cbHitBoxes = new mxCheckBox (wRender, 110, 65, 150, 20, "Hit Boxes", IDC_HITBOXES);
-	mxCheckBox *cbBones = new mxCheckBox (wRender, 5, 65, 100, 20, "Bones", IDC_BONES);
-	mxCheckBox *cbAttachments = new mxCheckBox (wRender, 5, 45, 100, 20, "Attachments", IDC_ATTACHMENTS);
+	lTransparency = new mxLabel(wRender, 5, 45, 120, 18, "Opacity: 100%");
+	mxToolTip::add (slTransparency, "Model Opacity");
+	cbHitBoxes = new mxCheckBox (wRender, 140, 5, 100, 20, "Show Hit Boxes", IDC_HITBOXES);
+	cbBones = new mxCheckBox (wRender, 140, 25, 100, 20, "Show Bones", IDC_BONES);
+	cbAttachments = new mxCheckBox (wRender, 140, 45, 110, 20, "Show Attachments", IDC_ATTACHMENTS);
+	cbEyePosition = new mxCheckBox (wRender, 140, 65, 110, 20, "Show Eye Position", IDC_EYEPOS);
+	cbGround = new mxCheckBox (wRender, 260, 5, 110, 20, "Show Ground", IDC_GROUND);
+	cbMirror = new mxCheckBox (wRender, 260, 25, 150, 20, "Mirror Model On Ground", IDC_MIRROR);
+	cbBackground = new mxCheckBox (wRender, 260, 45, 110, 20, "Show Background", IDC_BACKGROUND);
+	cbWireframeOverlay = new mxCheckBox (wRender, 260, 65, 110, 20, "Wireframe Overlay", IDC_OVERLAYWIREWRAME);
 
 #ifdef HAVE_SCALE
-	leMeshScale = new mxLineEdit (wRender, 270, 5, 50, 18, "1.0");
+	leMeshScale = new mxLineEdit (wRender, 430, 5, 50, 18, "1.0");
 	mxToolTip::add (leMeshScale, "Mesh Scale");
-	leBoneScale = new mxLineEdit (wRender, 270, 25, 50, 18, "1.0");
+	leBoneScale = new mxLineEdit (wRender, 430, 25, 50, 18, "1.0");
 	mxToolTip::add (leBoneScale, "Bone Scale");
-	mxButton *bMeshScale = new mxButton (wRender, 325, 5, 50, 18, "Scale", 10001);
-	mxButton *bBoneScale = new mxButton (wRender, 325, 25, 50, 18, "Scale", 10002);
+	mxButton *bMeshScale = new mxButton (wRender, 485, 5, 50, 18, "Scale Mesh", 10001);
+	mxButton *bBoneScale = new mxButton (wRender, 485, 25, 50, 18, "Scale Bones", 10002);
 #endif
 
-	mxWindow *wSequence = new mxWindow (this, 0, 0, 0, 0);
-	tab->add (wSequence, "Sequence");
-	cSequence = new mxChoice (wSequence, 5, 5, 200, 22, IDC_SEQUENCE);	
-	mxToolTip::add (cSequence, "Select Sequence");
-	slSpeedScale = new mxSlider (wSequence, 5, 32, 200, 18, IDC_SPEEDSCALE);
-	slSpeedScale->setRange (0, 200);
-	slSpeedScale->setValue (40);
-	mxToolTip::add (slSpeedScale, "Speed Scale");
-	tbStop = new mxToggleButton (wSequence, 5, 55, 60, 22, "Stop", IDC_STOP);
-	mxToolTip::add (tbStop, "Stop Playing");
-	bPrevFrame = new mxButton (wSequence, 70, 55, 30, 22, "<<", IDC_PREVFRAME);
-	bPrevFrame->setEnabled (false);
-	mxToolTip::add (bPrevFrame, "Prev Frame");
-	leFrame = new mxLineEdit (wSequence, 105, 55, 50, 22, "", IDC_FRAME); 
-	leFrame->setEnabled (false);
-	mxToolTip::add (leFrame, "Set Frame");
-	bNextFrame = new mxButton (wSequence, 160, 55, 30, 22, ">>", IDC_NEXTFRAME);
-	bNextFrame->setEnabled (false);
-	mxToolTip::add (bNextFrame, "Next Frame");
-
+	lDrawnPolys = new mxLabel (wRender, 430, 65, 112, 18, "Drawn Polys: 0");
 
 	mxWindow *wBody = new mxWindow (this, 0, 0, 0, 0);
-	tab->add (wBody, "Body");
-	cBodypart = new mxChoice (wBody, 5, 5, 100, 22, IDC_BODYPART);
-	mxToolTip::add (cBodypart, "Choose a bodypart");
-	cSubmodel = new mxChoice (wBody, 110, 5, 100, 22, IDC_SUBMODEL);
-	mxToolTip::add (cSubmodel, "Choose a submodel of current bodypart");
-	cController = new mxChoice (wBody, 5, 30, 100, 22, IDC_CONTROLLER);	
-	mxToolTip::add (cController, "Choose a bone controller");
-	slController = new mxSlider (wBody, 105, 32, 100, 18, IDC_CONTROLLERVALUE);
-	slController->setRange (0, 45);
-	mxToolTip::add (slController, "Change current bone controller value");
-	lModelInfo1 = new mxLabel (wBody, 220, 5, 120, 100, "No Model.");
-	lModelInfo2 = new mxLabel (wBody, 340, 5, 120, 100, "");
+	tab->add (wBody, "Body Parts");
+
+	new mxLabel (wBody, 120, 8, 60, 18, "Part");
+	cBodypart = new mxChoice (wBody, 5, 5, 112, 22, IDC_BODYPART);
+	mxToolTip::add (cBodypart, "Choose a body part");
+
+	new mxLabel (wBody, 120, 33, 60, 18, "Sub-model");
+	cSubmodel = new mxChoice (wBody, 5, 30, 112, 22, IDC_SUBMODEL);
+	mxToolTip::add (cSubmodel, "Choose a sub-model of the current body part");
+
+	new mxLabel (wBody, 120, 58, 60, 18, "Skin");
 	cSkin = new mxChoice (wBody, 5, 55, 100, 22, IDC_SKINS);
 	mxToolTip::add (cSkin, "Choose a skin family");
 
+	new mxLabel (wBody, 305, 8, 90, 18, "Controller");
+	cController = new mxChoice (wBody, 190, 5, 112, 22, IDC_CONTROLLER);	
+	mxToolTip::add (cController, "Choose a bone controller");
+
+	new mxLabel (wBody, 305, 33, 50, 18, "Value");
+	slController = new mxSlider (wBody, 185, 30, 117, 18, IDC_CONTROLLERVALUE);
+	slController->setRange (0, 45);
+	mxToolTip::add (slController, "Change current bone controller value");
+
+	lModelInfo1 = new mxLabel (wBody, 370, 12, 120, 100, "");
+	lModelInfo2 = new mxLabel (wBody, 500, 12, 120, 100, "");
+
+	lDrawnPolys2 = new mxLabel (wBody, 190, 58, 112, 18, "Drawn Polys: 0");
+
 	mxWindow *wTexture = new mxWindow (this, 0, 0, 0, 0);
-	tab->add (wTexture, "Texture");
-	cTextures = new mxChoice (wTexture, 5, 5, 150, 22, IDC_TEXTURES);
+	tab->add (wTexture, "Textures");
+
+	lTexSize = new mxLabel (wTexture, 5, 3, 150, 15, "Texture");
+	cTextures = new mxChoice (wTexture, 5, 18, 150, 22, IDC_TEXTURES);
 	mxToolTip::add (cTextures, "Choose a texture");
-	
-	new mxButton (wTexture, 160, 5, 75, 18, "Export", IDC_EXPORTTEXTURE);
-	new mxButton (wTexture, 160, 25, 75, 18, "Import", IDC_IMPORTTEXTURE);
-	new mxButton (wTexture, 160, 45, 75, 18, "Save Model", IDC_SAVEMODEL);
-	lTexSize = new mxLabel (wTexture, 162, 70, 150, 18, "Width x Height");
-	cbChrome = new mxCheckBox (wTexture, 5, 30, 150, 22, "Chrome Effect", IDC_CHROME);
-	mxToolTip::add (new mxSlider (wTexture, 5, 57, 150, 18, IDC_TEXTURESCALE), "Scale texture size");
-	
+
+	lTextureScale = new mxLabel (wTexture, 5, 47, 150, 15, "Scale Texture View (1x)");
+	slTextureScale = new mxSlider (wTexture, 0, 60, 160, 18, IDC_TEXTURESCALE);
+	slTextureScale->setRange (1, 4);
+	slTextureScale->setSteps (4, 1);
+	mxToolTip::add (slTextureScale, "Scale texture view size");
+	cbChrome = new mxCheckBox (wTexture, 180, 5, 70, 18, "Chrome", IDC_CHROME);
+	cbAdditive = new mxCheckBox (wTexture, 180, 25, 70, 18, "Additive", IDC_ADDITIVE);
+	cbTransparent = new mxCheckBox (wTexture, 180, 45, 75, 18, "Transparent", IDC_TRANSPARENT);
+	cbUVMap = new mxCheckBox (wTexture, 300, 5, 90, 18, "Show UV Map", IDC_UVMAP);
+	cbUVMapOverlay = new mxCheckBox (wTexture, 300, 25, 112, 18, "Overlay UV Map", IDC_OVERLAYUVMAP);
+	cbAA = new mxCheckBox (wTexture, 300, 45, 112, 18, "Anti-Alias Lines", IDC_ANTIALIASING);
+	cMesh = new mxChoice (wTexture, 300, 65, 112, 22, IDC_MESH);
+	mxToolTip::add (cMesh, "Choose which mesh to show the UVMap for");
+	new mxButton (wTexture, 450, 5, 80, 18, "Import Texture", IDC_IMPORTTEXTURE);
+	new mxButton (wTexture, 450, 25, 80, 18, "Export Texture", IDC_EXPORTTEXTURE);
+	new mxButton (wTexture, 450, 45, 80, 18, "Export UV Map", IDC_EXPORTUVMAP);
+
+	mxWindow *wSequence = new mxWindow (this, 0, 0, 0, 0);
+	tab->add (wSequence, "Sequences");
+	new mxLabel (wSequence, 5, 3, 200, 15, "Animation Sequence");
+	cSequence = new mxChoice (wSequence, 5, 18, 200, 22, IDC_SEQUENCE);
+	mxToolTip::add (cSequence, "Select an animation sequence");
+	tbStop = new mxToggleButton (wSequence, 5, 46, 60, 18, "Stop", IDC_STOP);
+	mxToolTip::add (tbStop, "Stop Playing");
+	bPrevFrame = new mxButton (wSequence, 84, 46, 30, 18, "<<", IDC_PREVFRAME);
+	bPrevFrame->setEnabled (false);
+	mxToolTip::add (bPrevFrame, "Prev Frame");
+	leFrame = new mxLineEdit (wSequence, 119, 46, 50, 18, "", IDC_FRAME); 
+	leFrame->setEnabled (false);
+	mxToolTip::add (leFrame, "Set Frame");
+	bNextFrame = new mxButton (wSequence, 174, 46, 30, 18, ">>", IDC_NEXTFRAME);
+	bNextFrame->setEnabled (false);
+	mxToolTip::add (bNextFrame, "Next Frame");
+	slSpeedScale = new mxSlider (wSequence, 0, 70, 165, 18, IDC_SPEEDSCALE);
+        slSpeedScale->setRange (0, 200);
+        slSpeedScale->setValue (40);
+        mxToolTip::add (slSpeedScale, "Playback speed Scale");
+	new mxLabel (wSequence, 170, 70, 40, 15, "Speed");
+	lSequenceInfo1 = new mxLabel (wSequence, 228, 12, 90, 100, "");
+	new mxLabel (wSequence, 320, 3, 40, 15, "Events");
+	cEvent = new mxChoice (wSequence, 320, 18, 100, 22, IDC_EVENT);
+	mxCheckBox *cbPlaySound = new mxCheckBox (wSequence, 320, 45, 75, 18, "Play Sound", IDC_PLAYSOUND);
+	lEventInfo = new mxLabel (wSequence, 440, 12, 340, 100, "");
+
+	mxWindow *wWeaponOrigin = new mxWindow (this, 0, 0, 0, 0);
+	tab->add (wWeaponOrigin, "Weapon Origin");
+	new mxLabel (wWeaponOrigin, 5, 3, 200, 15, "Animation Sequence");
+	cWpSequence = new mxChoice (wWeaponOrigin, 5, 18, 200, 22, IDC_WEAPONSEQUENCE);
+	mxToolTip::add (cWpSequence, "Select an animation sequence");
+	tbWpStop = new mxToggleButton (wWeaponOrigin, 5, 46, 60, 18, "Stop", IDC_WEAPONSTOP);
+	mxToolTip::add (tbWpStop, "Stop Playing");
+	mxButton *bWpPrevFrame = new mxButton (wWeaponOrigin, 84, 46, 30, 18, "<<", IDC_PREVFRAME);
+	bWpPrevFrame->setEnabled (false);
+	mxToolTip::add (bWpPrevFrame, "Prev Frame");
+	leWpFrame = new mxLineEdit (wWeaponOrigin, 119, 46, 50, 18, "", IDC_WEAPONFRAME);
+	leWpFrame->setEnabled (false);
+	mxToolTip::add (leWpFrame, "Set Frame");
+	mxButton *bWpNextFrame = new mxButton (wWeaponOrigin, 174, 46, 30, 18, ">>", IDC_NEXTFRAME);
+	bWpNextFrame->setEnabled (false);
+	mxToolTip::add (bWpNextFrame, "Next Frame");
+	mxSlider *slWpSpeedScale = new mxSlider (wWeaponOrigin, 0, 70, 165, 18, IDC_SPEEDSCALE);
+        slWpSpeedScale->setRange (0, 200);
+        slWpSpeedScale->setValue (40);
+        mxToolTip::add (slWpSpeedScale, "Playback speed Scale");
+	new mxLabel (wWeaponOrigin, 170, 70, 40, 15, "Speed");
+	lSequenceInfo2 = new mxLabel (wWeaponOrigin, 228, 12, 90, 100, "");
+	leOriginX = new mxLineEdit (wWeaponOrigin, 320, 5, 72, 18, "0.000000");
+	new mxLabel (wWeaponOrigin, 400, 7, 150, 15, "Origin X");
+	leOriginY = new mxLineEdit (wWeaponOrigin, 320, 26, 72, 18, "0.000000");
+	new mxLabel (wWeaponOrigin, 400, 28, 150, 15, "Origin Y");
+	leOriginZ = new mxLineEdit (wWeaponOrigin, 320, 47, 72, 18, "0.000000");
+	new mxLabel (wWeaponOrigin, 400, 49, 150, 15, "Origin Z");
+	new mxButton (wWeaponOrigin, 320, 68, 72, 18, "Test Origins", IDC_ORIGINSTEST);
+	new mxCheckBox (wWeaponOrigin, 460, 5, 112, 22, "Show Crosshair", IDC_CROSSHAIR);
+	new mxCheckBox (wWeaponOrigin, 460, 25, 112, 22, "Show Guidelines", IDC_GUIDELINE);
+	new mxLabel (wWeaponOrigin, 460, 48, 150, 48, "Changes to the origin must be\nmade by altering the $origin line\nin your model's QC file.");
+
 #ifdef WIN32
 	mxWindow *wFullscreen = new mxWindow (this, 0, 0, 0, 0);
 	tab->add (wFullscreen, "Fullscreen");
 
 	// Create widgets for the Fullscreen Tab
-	mxLabel *lResolution = new mxLabel (wFullscreen, 5, 7, 50, 18, "Resolution");
-	leWidth = new mxLineEdit (wFullscreen, 5, 5, 50, 22, "800");
-	mxLabel *lX = new mxLabel (wFullscreen, 65, 7, 22, 22, "x");
-	leHeight = new mxLineEdit (wFullscreen, 82, 5, 50, 22, "600");
+	mxLabel *lResolution = new mxLabel (wFullscreen, 5, 3, 90, 18, "Resolution");
+	//leWidth = new mxLineEdit (wFullscreen, 5, 5, 50, 22, "800");
+	//mxLabel *lX = new mxLabel (wFullscreen, 65, 7, 22, 22, "x");
+	//leHeight = new mxLineEdit (wFullscreen, 82, 5, 50, 22, "600");
 	//cb3dfxOpenGL = new mxCheckBox (wFullscreen, 5, 30, 130, 22, "3Dfx OpenGL");
-	mxButton *bView = new mxButton (wFullscreen, 140, 5, 75, 22, "Fullscreen!", IDC_FULLSCREEN);
+	mxChoice *cResolution = new mxChoice (wWeaponOrigin, 5, 17, 112, 22, IDC_RESOLUTION);
+	cResolution->add ("640 x 480");
+	cResolution->add ("800 x 600");
+	cResolution->add ("1072 x 768");
+	cResolution->add ("1152 x 864");
+	cResolution->add ("1280 x 720");
+	cResolution->add ("1280 x 768");
+	cResolution->add ("1280 x 960");
+	cResolution->add ("1280 x 1024");
+	cResolution->add ("1360 x 768");
+	cResolution->add ("1600 x 768");
+	cResolution->add ("1600 x 900");
+	cResolution->add ("1600 x 1024");
+	cResolution->add ("1600 x 1200");
+	cResolution->select (0);
+	mxToolTip::add (cResolution, "Select screen resolution");
+	mxButton *bView = new mxButton (wFullscreen, 140, 17, 75, 22, "Fullscreen!", IDC_FULLSCREEN);
 #endif
 
 	g_ControlPanel = this;
+	prevTab = 0;
 }
 
 
@@ -156,7 +243,7 @@ ControlPanel::~ControlPanel ()
 int
 ControlPanel::handleEvent (mxEvent *event)
 {
-	static char str[128];
+	char str[128];
 
 	if (event->event == mxEvent::Size)
 	{
@@ -168,7 +255,26 @@ ControlPanel::handleEvent (mxEvent *event)
 	{
 		case IDC_TAB:
 		{
-			g_viewerSettings.showTexture = (tab->getSelectedIndex () == 3);
+			g_viewerSettings.showTexture = (tab->getSelectedIndex () == 2);
+
+			if (tab->getSelectedIndex () == 4)
+			{
+				VectorCopy (g_viewerSettings.rot, g_viewerSettings.rotOld2);
+				VectorCopy (g_viewerSettings.trans, g_viewerSettings.transOld2);
+				g_viewerSettings.yaw = 74.0f;
+				testView ();
+			}
+			else
+			{
+				g_viewerSettings.yaw = 65.0f;
+			}
+
+			if (4 == prevTab)
+			{
+				VectorCopy (g_viewerSettings.rotOld2, g_viewerSettings.rot);
+				VectorCopy (g_viewerSettings.transOld2, g_viewerSettings.trans);
+			}
+			prevTab = tab->getSelectedIndex ();
 		}
 		break;
 
@@ -185,7 +291,9 @@ ControlPanel::handleEvent (mxEvent *event)
 		case IDC_TRANSPARENCY:
 		{
 			int value = slTransparency->getValue ();
-			g_viewerSettings.transparency = (float) value / 100.0f; 
+			g_viewerSettings.transparency = (float) value / 100.0f;
+			sprintf (str, "Opacity: %d%%", value);
+			lTransparency->setLabel (str);
 		}
 		break;
 
@@ -213,12 +321,58 @@ ControlPanel::handleEvent (mxEvent *event)
 			g_viewerSettings.showAttachments = ((mxCheckBox *) event->widget)->isChecked ();
 			break;
 
+		case IDC_CROSSHAIR:
+			g_viewerSettings.showCrosshair = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
+		case IDC_GUIDELINE:
+			g_viewerSettings.showGuideLines = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
+		case IDC_EYEPOS:
+			g_viewerSettings.showEyePosition = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
+		case IDC_UVMAP:
+			g_viewerSettings.showUVMap = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
+		case IDC_OVERLAYUVMAP:
+			g_viewerSettings.showUVMapOverlay = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
+		case IDC_ANTIALIASING:
+			g_viewerSettings.showSmoothLines = ((mxCheckBox *) event->widget)->isChecked ();
+			break;
+
 		case IDC_SEQUENCE:
 		{
 			int index = cSequence->getSelectedIndex ();
 			if (index >= 0)
 			{
 				setSequence (index);
+				setEvent (index);
+			}
+		}
+		break;
+
+		case IDC_WEAPONSEQUENCE:
+		{
+			int index = cWpSequence->getSelectedIndex ();
+			if (index >= 0)
+			{
+				setSequence (index);
+				setEvent (index);
+			}
+		}
+		break;
+
+		case IDC_EVENT:
+		{
+			int index = cEvent->getSelectedIndex ();
+			if (index >= 0)
+			{
+				setEventInfo (index);
 			}
 		}
 		break;
@@ -235,20 +389,58 @@ ControlPanel::handleEvent (mxEvent *event)
 			if (tbStop->isChecked ())
 			{
 				tbStop->setLabel ("Play");
+				tbWpStop->setChecked (true);
+				tbWpStop->setLabel ("Play");
 				g_bStopPlaying = true;
 				g_nCurrFrame = g_studioModel.SetFrame (-1);
 				sprintf (str, "%d", g_nCurrFrame);
 				leFrame->setLabel (str);
+				leWpFrame->setLabel (str);
 				bPrevFrame->setEnabled (true);
 				leFrame->setEnabled (true);
+				leWpFrame->setEnabled (true);
 				bNextFrame->setEnabled (true);
 			}
 			else
 			{
 				tbStop->setLabel ("Stop");
+				tbWpStop->setChecked (false);
+				tbWpStop->setLabel ("Stop");
 				g_bStopPlaying = false;
 				bPrevFrame->setEnabled (false);
 				leFrame->setEnabled (false);
+				leWpFrame->setEnabled (false);
+				bNextFrame->setEnabled (false);
+			}
+		}
+		break;
+
+		case IDC_WEAPONSTOP:
+		{
+			if (tbWpStop->isChecked ())
+			{
+				tbStop->setLabel ("Play");
+				tbStop->setChecked (true);
+				tbWpStop->setLabel ("Play");
+				g_bStopPlaying = true;
+				g_nCurrFrame = g_studioModel.SetFrame (-1);
+				sprintf (str, "%d", g_nCurrFrame);
+				leFrame->setLabel (str);
+				leWpFrame->setLabel (str);
+				bPrevFrame->setEnabled (true);
+				leFrame->setEnabled (true);
+				leWpFrame->setEnabled (true);
+				bNextFrame->setEnabled (true);
+			}
+			else
+			{
+				tbStop->setLabel ("Stop");
+				tbStop->setChecked (false);
+				tbWpStop->setLabel ("Stop");
+				g_bStopPlaying = false;
+				bPrevFrame->setEnabled (false);
+				leFrame->setEnabled (false);
+				leWpFrame->setEnabled (false);
 				bNextFrame->setEnabled (false);
 			}
 		}
@@ -259,10 +451,12 @@ ControlPanel::handleEvent (mxEvent *event)
 			g_nCurrFrame = g_studioModel.SetFrame (g_nCurrFrame - 1);
 			sprintf (str, "%d", g_nCurrFrame);
 			leFrame->setLabel (str);
+			leWpFrame->setLabel (str);
 		}
 		break;
 
 		case IDC_FRAME:
+		case IDC_WEAPONFRAME:
 		{
 			g_nCurrFrame = atoi (leFrame->getLabel ());
 			g_nCurrFrame = g_studioModel.SetFrame (g_nCurrFrame);
@@ -274,6 +468,7 @@ ControlPanel::handleEvent (mxEvent *event)
 			g_nCurrFrame = g_studioModel.SetFrame (g_nCurrFrame + 1);
 			sprintf (str, "%d", g_nCurrFrame);
 			leFrame->setLabel (str);
+			leWpFrame->setLabel (str);
 		}
 		break;
 
@@ -283,7 +478,6 @@ ControlPanel::handleEvent (mxEvent *event)
 			if (index >= 0)
 			{
 				setBodypart (index);
-
 			}
 		}
 		break;
@@ -294,7 +488,6 @@ ControlPanel::handleEvent (mxEvent *event)
 			if (index >= 0)
 			{
 				setSubmodel (index);
-
 			}
 		}
 		break;
@@ -327,6 +520,19 @@ ControlPanel::handleEvent (mxEvent *event)
 		}
 		break;
 
+		case IDC_MESH:
+		{
+			int index = cMesh->getSelectedIndex ();
+			if (index >= 0)
+			{
+				g_viewerSettings.showAllMeshes = true;
+				if (g_viewerSettings.meshCount <= 1 || g_viewerSettings.meshCount >= index + 1)
+					g_viewerSettings.showAllMeshes = false;
+				g_viewerSettings.mesh = index;
+			}
+		}
+		break;
+
 		case IDC_TEXTURES:
 		{
 			int index = cTextures->getSelectedIndex ();
@@ -337,13 +543,21 @@ ControlPanel::handleEvent (mxEvent *event)
 				if (hdr)
 				{
 					mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + index;
-					char str[32];
-					sprintf (str, "Size: %d x %d", ptexture->width, ptexture->height);
+					sprintf (str, "Texture (size: %d x %d)", ptexture->width, ptexture->height);
 					lTexSize->setLabel (str);
 					cbChrome->setChecked ((ptexture->flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
+					cbAdditive->setChecked ((ptexture->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
+					cbTransparent->setChecked ((ptexture->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
 				}
+				setMesh (index);
 				d_GlWindow->redraw ();
 			}
+		}
+		break;
+
+		case IDC_ORIGINSTEST:
+		{
+			testView ();
 		}
 		break;
 
@@ -354,9 +568,50 @@ ControlPanel::handleEvent (mxEvent *event)
 			{
 				mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + g_viewerSettings.texture;
 				if (cbChrome->isChecked ())
+				{
+					ptexture->flags &= ~STUDIO_NF_TRANSPARENT;
 					ptexture->flags |= STUDIO_NF_CHROME;
+					cbTransparent->setChecked (0);
+				}
 				else
 					ptexture->flags &= ~STUDIO_NF_CHROME;
+			}
+		}
+		break;
+
+		case IDC_ADDITIVE:
+		{
+			studiohdr_t *hdr = g_studioModel.getTextureHeader ();
+			if (hdr)
+			{
+				mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + g_viewerSettings.texture;
+				if (cbAdditive->isChecked ())
+				{
+					ptexture->flags &= ~STUDIO_NF_TRANSPARENT;
+					ptexture->flags |= STUDIO_NF_ADDITIVE;
+					cbTransparent->setChecked (0);
+				}
+				else
+					ptexture->flags &= ~STUDIO_NF_ADDITIVE;
+			}
+		}
+		break;
+
+		case IDC_TRANSPARENT:
+		{
+			studiohdr_t *hdr = g_studioModel.getTextureHeader ();
+			if (hdr)
+			{
+				mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + g_viewerSettings.texture;
+				if (cbTransparent->isChecked ())
+				{
+					ptexture->flags &= ~(STUDIO_NF_ADDITIVE|STUDIO_NF_CHROME);
+					ptexture->flags |= STUDIO_NF_TRANSPARENT;
+					cbChrome->setChecked (0);
+					cbAdditive->setChecked (0);
+				}
+				else
+				ptexture->flags &= ~STUDIO_NF_TRANSPARENT;
 			}
 		}
 		break;
@@ -441,30 +696,12 @@ ControlPanel::handleEvent (mxEvent *event)
 		}
 		break;
 
-		case IDC_SAVEMODEL:
-		{
-			char *ptr = (char *) mxGetSaveFileName (this, "", "*.mdl");
-			if (!ptr)
-				break;
-
-			char filename[256];
-			char ext[16];
-
-			strcpy (filename, ptr);
-			strcpy (ext, mx_getextension (filename));
-			if (mx_strcasecmp (ext, ".mdl"))
-				strcat (filename, ".mdl");
-
-			if (!g_studioModel.SaveModel (filename))
-				mxMessageBox (this, "Error saving model.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-			else
-				strcpy (g_viewerSettings.modelFile, filename);
-		}
-		break;
-
 		case IDC_TEXTURESCALE:
 		{
-			g_viewerSettings.textureScale =  1.0f + (float) ((mxSlider *) event->widget)->getValue () * 4.0f / 100.0f;
+			int texScale = ((mxSlider *) event->widget)->getValue ();
+			g_viewerSettings.textureScale =  1.0f + (float) texScale * 4.0f / 100.0f;
+			sprintf (str, "Scale Texture View (%dx)", texScale);
+			lTextureScale->setLabel (str);
 			d_GlWindow->redraw ();
 		}
 		break;
@@ -597,10 +834,10 @@ ControlPanel::dumpModelInfo ()
 				fprintf (file, "texture %d.index: %d\n", i + 1, ptextures[i].index);
 			}
 
-			hdr = g_studioModel.getStudioHeader ();
 			fprintf (file, "\nnumskinref: %d\n", hdr->numskinref);
 			fprintf (file, "numskinfamilies: %d\n", hdr->numskinfamilies);
 
+			hdr = g_studioModel.getStudioHeader ();
 			fprintf (file, "\nnumbodyparts: %d\n", hdr->numbodyparts);
 			for (i = 0; i < hdr->numbodyparts; i++)
 			{
@@ -637,6 +874,7 @@ ControlPanel::loadModel (const char *filename)
 		if (g_studioModel.PostLoadModel ((char *) filename))
 		{
 			initSequences ();
+			setEvent (0);
 			initBodyparts ();
 			initBoneControllers ();
 			initSkins ();
@@ -645,6 +883,7 @@ ControlPanel::loadModel (const char *filename)
 			strcpy (g_viewerSettings.modelFile, filename);
 			setModelInfo ();
 			g_viewerSettings.sequence = 0;
+			setSequenceInfo ();
 			g_viewerSettings.speedScale = 1.0f;
 			slSpeedScale->setValue (40);
 			int i;
@@ -718,13 +957,16 @@ ControlPanel::initSequences ()
 	if (hdr)
 	{
 		cSequence->removeAll ();
+		cWpSequence->removeAll ();
 		for (int i = 0; i < hdr->numseq; i++)
 		{
 			mstudioseqdesc_t *pseqdescs = (mstudioseqdesc_t *) ((byte *) hdr + hdr->seqindex);
 			cSequence->add (pseqdescs[i].label);
+			cWpSequence->add (pseqdescs[i].label);
 		}
 
 		cSequence->select (0);
+		cWpSequence->select (0);
 	}
 }
 
@@ -734,8 +976,143 @@ void
 ControlPanel::setSequence (int index)
 {
 	cSequence->select (index);
+	cWpSequence->select (index);
 	g_studioModel.SetSequence(index);
 	g_viewerSettings.sequence = index;
+	setSequenceInfo ();
+}
+
+
+
+void
+ControlPanel::setSequenceInfo ()
+{
+	char str[1024];
+
+	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+
+	if (!hdr)
+		return;
+ 
+	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *) ((byte *) hdr + hdr->seqindex) + g_viewerSettings.sequence;
+
+	sprintf (str,
+		"Sequence#: %d\n"
+		"Frames: %d\n"
+		"FPS: %d\n"
+		"Blends: %d\n"
+		"# of events: %d\n",
+		g_viewerSettings.sequence,
+		pseqdesc->numframes,
+		(int)pseqdesc->fps,
+		pseqdesc->numblends,
+		pseqdesc->numevents
+		);
+
+	lSequenceInfo1->setLabel (str);
+}
+
+
+
+void
+ControlPanel::setEvent (int index)
+{
+	char str[64];
+
+	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+
+	if (!hdr)
+		return;
+
+	mstudioseqdesc_t *pseqdescs = (mstudioseqdesc_t *) ((byte *)hdr + hdr->seqindex);  //g_viewerSettings.sequence;
+
+	cEvent->removeAll ();
+	if (0 < pseqdescs[index].numevents)
+	{
+		for (int i = 1; i <= pseqdescs[index].numevents; i++)
+		{
+			sprintf (str, "Event %d", i);
+			cEvent->add (str);
+		}
+	}
+	cEvent->select (0);
+	setEventInfo (0);
+}
+
+
+
+void
+ControlPanel::setEventInfo (int index)
+{
+	char str[1024];
+
+	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+
+	if (!hdr)
+		return;
+
+	mstudioseqdesc_t *pseqdescs = (mstudioseqdesc_t *) ((byte *)hdr + hdr->seqindex);
+
+	if (pseqdescs->numevents)
+	{
+		mstudioevent_t *pevents = (mstudioevent_t *) ((byte *)hdr + pseqdescs->eventindex) + index;
+
+		sprintf (str,
+			"Frame: %d\n"
+			"Event: %d\n"
+			"Options: %s\n"
+			"Type: %d\n",
+			pevents->frame,
+			pevents->event,
+			pevents->options,
+			pevents->type
+			);
+	}
+	else
+	{
+		str[0] = '\0';
+	}
+	lEventInfo->setLabel (str);
+}
+
+
+
+void
+ControlPanel::setMesh (int index)
+{
+	char str[64];
+	int i, j, k = 0, l;
+
+	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+
+	if (!hdr)
+		return;
+
+	cMesh->removeAll ();
+	for (i = 0; i < hdr->numbodyparts; i++)
+	{
+		mstudiobodyparts_t *pbodyparts = (mstudiobodyparts_t *) ((byte *) hdr + hdr->bodypartindex) + i;
+		for (j = 0; j < pbodyparts->nummodels; j++)
+		{
+			mstudiomodel_t *pmodels = (mstudiomodel_t *) ((byte *) hdr + pbodyparts->modelindex) + j;
+			for (l = 0; l < pmodels->nummesh; l++)
+			{
+				mstudiomesh_t *pmesh = (mstudiomesh_t *) ((byte *) hdr + pmodels->meshindex) + l;
+				if (pmesh->skinref == index)
+				{
+					sprintf (str, "Mesh %d", ++k);
+					cMesh->add (str);
+				}
+			}
+		}
+	}
+
+	if (1 < k)
+		cMesh->add ("All");
+
+	cMesh->select (0);
+	g_viewerSettings.mesh = 0;
+	g_viewerSettings.meshCount = k;
 }
 
 
@@ -875,7 +1252,7 @@ ControlPanel::setBoneControllerValue (int index, float value)
 void
 ControlPanel::initSkins ()
 {
-	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+	studiohdr_t *hdr = g_studioModel.getTextureHeader ();
 	if (hdr)
 	{
 		cSkin->setEnabled (hdr->numskinfamilies > 0);
@@ -899,10 +1276,12 @@ ControlPanel::initSkins ()
 void
 ControlPanel::setModelInfo ()
 {
-	static char str[2048];
-	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
+	char str[1024];
 
-	if (!hdr)
+	studiohdr_t *studioHdr = g_studioModel.getStudioHeader ();
+	studiohdr_t *textureHdr = g_studioModel.getTextureHeader ();
+
+	if (!!studioHdr || !textureHdr)
 		return;
 
 	sprintf (str,
@@ -911,11 +1290,11 @@ ControlPanel::setModelInfo ()
 		"Hit Boxes: %d\n"
 		"Sequences: %d\n"
 		"Sequence Groups: %d\n",
-		hdr->numbones,
-		hdr->numbonecontrollers,
-		hdr->numhitboxes,
-		hdr->numseq,
-		hdr->numseqgroups
+		studioHdr->numbones,
+		studioHdr->numbonecontrollers,
+		studioHdr->numhitboxes,
+		studioHdr->numseq,
+		studioHdr->numseqgroups
 		);
 
 	lModelInfo1->setLabel (str);
@@ -926,13 +1305,25 @@ ControlPanel::setModelInfo ()
 		"Bodyparts: %d\n"
 		"Attachments: %d\n"
 		"Transitions: %d\n",
-		hdr->numtextures,
-		hdr->numskinfamilies,
-		hdr->numbodyparts,
-		hdr->numattachments,
-		hdr->numtransitions);
+		textureHdr->numtextures,
+		textureHdr->numskinfamilies,
+		studioHdr->numbodyparts,
+		studioHdr->numattachments,
+		studioHdr->numtransitions);
 
 	lModelInfo2->setLabel (str);
+}
+
+
+
+void
+ControlPanel::setDrawnPolysInfo ()
+{
+	char str[256];
+
+	sprintf (str, "Drawn Polys: %d", g_polys);
+	lDrawnPolys->setLabel (str);
+	lDrawnPolys2->setLabel (str);
 }
 
 
@@ -950,7 +1341,12 @@ ControlPanel::initTextures ()
 		cTextures->select (0);
 		g_viewerSettings.texture = 0;
 		if (hdr->numtextures > 0)
+		{
 			cbChrome->setChecked ((ptextures[0].flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
+			cbAdditive->setChecked ((ptexture->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
+			cbTransparent->setChecked ((ptexture->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
+			setMesh(0);
+		}
 	}
 }
 
@@ -977,6 +1373,41 @@ ControlPanel::centerView ()
 	g_viewerSettings.rot[1] = -90.0f;
 	g_viewerSettings.rot[2] = 0.0f;
 	d_GlWindow->redraw ();
+}
+
+
+
+void
+ControlPanel::saveView ()
+{
+	VectorCopy(g_viewerSettings.rot, g_viewerSettings.rotOld);
+	VectorCopy(g_viewerSettings.trans, g_viewerSettings.transOld);
+}
+
+
+
+void
+ControlPanel::recallView ()
+{
+	VectorCopy(g_viewerSettings.rotOld, g_viewerSettings.rot);
+	VectorCopy(g_viewerSettings.transOld, g_viewerSettings.trans);
+}
+
+
+
+void
+ControlPanel::testView ()
+{
+	float dx = atof(leOriginX->getLabel());
+	float dy = atof(leOriginY->getLabel());
+	float dz = atof(leOriginZ->getLabel());
+
+	g_viewerSettings.trans[0] = -dx - 0.03f;
+	g_viewerSettings.trans[1] = dz + 1.0172f;
+	g_viewerSettings.trans[2] = dy - 0.02f;
+	g_viewerSettings.rot[0] = -90.0f;
+	g_viewerSettings.rot[1] = 90.0f;
+	g_viewerSettings.rot[2] = 0.0f;
 }
 
 

@@ -35,6 +35,10 @@ typedef struct
 	// model 
 	float rot[3];
 	float trans[3];
+	float rotOld[3];
+	float transOld[3];
+	float rotOld2[3];
+	float transOld2[3];
 
 	// render
 	int renderMode;
@@ -45,11 +49,21 @@ typedef struct
 	bool showBones;
 	bool showTexture;
 	bool showAttachments;
+	bool showGuideLines;
+	bool showCrosshair;
+	bool showEyePosition;
+	bool showUVMap;
+	bool showUVMapOverlay;
+	bool showWireframeOverlay;
+	bool showSmoothLines;
 	int texture;
 	float textureScale;
 	int skin;
+	int mesh;
+	int meshCount;
 	bool mirror;
 	bool useStencil;	// if 3dfx fullscreen set false
+	bool showAllMeshes;
 
 	// animation
 	int sequence;
@@ -68,6 +82,10 @@ typedef struct
 	float bgColor[4];
 	float lColor[4];
 	float gColor[4];
+	float guColor[4];
+
+	// Field of View
+	float yaw;
 
 	// misc
 	int textureLimit;

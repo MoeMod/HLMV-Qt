@@ -34,6 +34,11 @@ InitViewerSettings (void)
 	g_viewerSettings.renderMode = RM_TEXTURED;
 	g_viewerSettings.transparency = 1.0f;
 
+	g_viewerSettings.yaw = 65.0f;
+	g_viewerSettings.bgColor[0] = 0.25f;
+	g_viewerSettings.bgColor[1] = 0.5f;
+	g_viewerSettings.bgColor[2] = 0.5f;
+
 	g_viewerSettings.gColor[0] = 0.85f;
 	g_viewerSettings.gColor[1] = 0.85f;
 	g_viewerSettings.gColor[2] = 0.69f;
@@ -41,6 +46,10 @@ InitViewerSettings (void)
 	g_viewerSettings.lColor[0] = 1.0f;
 	g_viewerSettings.lColor[1] = 1.0f;
 	g_viewerSettings.lColor[2] = 1.0f;
+
+	g_viewerSettings.guColor[0] = 1.0f;
+	g_viewerSettings.guColor[1] = 0.0f;
+	g_viewerSettings.guColor[2] = 0.0f;
 
 	g_viewerSettings.speedScale = 1.0f;
 	g_viewerSettings.textureLimit = 256;

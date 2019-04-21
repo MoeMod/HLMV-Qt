@@ -43,20 +43,17 @@ float g_lambert = 1.5;
 // Replaces gluPerspective. Sets the frustum to perspective mode.
 // fovY     - Field of vision in degrees in the y direction
 // aspect   - Aspect ratio of the viewport
-// zNear    - The near clipping distance
-// zFar     - The far clipping distance
-void perspectiveGL( GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFar )
+// near    - The near clipping distance
+// far     - The far clipping distance
+void perspectiveGL (GLfloat fovY, GLfloat aspect, GLfloat near, GLfloat far)
 {
-	const GLdouble pi = 3.1415926535897932384626433832795;
-	GLdouble fW, fH;
+	GLfloat w, h;
 
-	fH = tan( (fovY / 2) / 180 * pi ) * zNear;
+	h = tan (fovY / 360 * Q_PI) * zNear;
 
-	fH = tan( fovY / 360 * pi ) * zNear;
+	w = h * aspect;
 
-	fW = fH * aspect;
-
-	glFrustum( -fW, fW, -fH, fH, zNear, zFar );
+	glFrustum (-w, w, -h, h, near, far);
 }
 
 GlWindow::GlWindow (mxWindow *parent, int x, int y, int w, int h, const char *label, int style)
@@ -144,7 +141,7 @@ GlWindow::handleEvent (mxEvent *event)
 		{
 			g_viewerSettings.trans[2] = oldtz + (float) (event->y - oldy);
 		}
-		redraw ();
+		// redraw ();
 
 		return 1;
 	}
@@ -328,12 +325,15 @@ GlWindow::draw ()
 
 	glViewport (0, 0, w2 (), h2 ());
 
+	glEnable(GL_BLEND);
+
 	//
 	// show textures
 	//
 
 	if (g_viewerSettings.showTexture)
 	{
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 
@@ -351,35 +351,146 @@ GlWindow::draw ()
 			glLoadIdentity ();
 
 			glDisable (GL_CULL_FACE);
+			glDisable (GL_DEPTH_TEST);
 
 			glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 			float x = ((float) w2 () - w) / 2;
 			float y = ((float) h2 () - h) / 2;
 
 			glDisable (GL_TEXTURE_2D);
-			glColor4f (1.0f, 0.0f, 0.0f, 1.0f);
-			glRectf (x - 2, y - 2, x  + w + 2, y + h + 2);
+			if (g_viewerSettings.showUVMap)
+			{
+				if (g_viewerSettings.showUVMapOverlay)
+				{
+					glColor4f (0.0f, 0.0f, 1.0f, 1.0f);
+					glRectf (x, y, x + w, y + h);
+					glEnable (GL_TEXTURE_2D);
+					glColor4f (1.0f, 1.0f, 1.0f, 1.0f);
+					glBindTexture (GL_TEXTURE_2D, g_viewerSettings.texture + 3); //d_textureNames[0]);
 
-			glEnable (GL_TEXTURE_2D);
-			glColor4f (1.0f, 1.0f, 1.0f, 1.0f);
-			glBindTexture (GL_TEXTURE_2D, g_viewerSettings.texture + 3); //d_textureNames[0]);
+					glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					glBegin (GL_TRIANGLE_STRIP);
 
-			glBegin (GL_TRIANGLE_STRIP);
+					glTexCoord2f (0, 0);
+					glVertex2f (x, y);
 
-			glTexCoord2f (0, 0);
-			glVertex2f (x, y);
+					glTexCoord2f (1, 0);
+					glVertex2f (x + w, y);
 
-			glTexCoord2f (1, 0);
-			glVertex2f (x + w, y);
+					glTexCoord2f (0, 1);
+					glVertex2f (x, y + h);
 
-			glTexCoord2f (0, 1);
-			glVertex2f (x, y + h);
+					glTexCoord2f (1, 1);
+					glVertex2f (x + w, y + h);
 
-			glTexCoord2f (1, 1);
-			glVertex2f (x + w, y + h);
+					glEnd ();
 
-			glEnd ();
+				}
+				else
+				{
+					glColor4f (0.0f, 0.0f, 0.0f, 1.0f);
+					glRectf (x, y, x + w, y + h);
+				}
 
+				hdr = g_studioModel.getStudioHeader ();
+
+				if (hdr)
+				{
+					float s, t;
+					int i, j, k, l;
+					int index = -1;
+					short *pskinref = (short *)((byte *)hdr + hdr->skinindex);
+
+					for (k = 0; k < hdr->numbodyparts; k++)
+					{
+						mstudiobodyparts_t *pbodyparts = (mstudiobodyparts_t *) ((byte *) hdr + hdr->bodypartindex) + k;
+
+						for (j = 0; j < pbodyparts->nummodels; j++)
+						{
+							mstudiomodel_t *pmodels = (mstudiomodel_t *) ((byte *) hdr + pbodyparts->modelindex) + j;
+
+							for (l = 0; l < pmodels->nummesh; l++)
+							{
+								float s, t;
+								short *ptricmds;
+								int tri_type;
+								mstudiomesh_t *pmesh = (mstudiomesh_t *) ((byte *) hdr + pmodels->meshindex) + l;
+
+								++index;
+								if (pmesh->skinref != g_viewerSettings.texture
+								    || (g_viewerSettings.mesh != index && !g_viewerSettings.showAllMeshes))
+									continue;
+
+								ptricmds = (short *)((byte *)hdr + pmesh->triindex);
+
+								s = 1.0/(float)ptextures[pskinref[pmesh->skinref]].width;
+								t = 1.0/(float)ptextures[pskinref[pmesh->skinref]].height;
+
+								glColor4f (1.0f, 1.0f, 1.0f, 1.0f);
+								glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+								glDisable (GL_TEXTURE_2D);
+								glDisable (GL_CULL_FACE);
+								glDisable (GL_DEPTH_TEST);
+								if (g_viewerSettings.showSmoothLines)
+									glEnable (GL_LINE_SMOOTH);
+								else
+									glDisable (GL_LINE_SMOOTH);
+								glLineWidth (1.0);
+
+								while (i = *(ptricmds++))
+								{
+									if (i < 0)
+									{
+										tri_type = GL_TRIANGLE_FAN;
+										i = -i;
+									}
+									else
+									{
+										tri_type = GL_TRIANGLE_STRIP;
+									}
+
+									glBegin (tri_type);
+									for ( ; i > 0; i--, ptricmds += 4)
+									{
+										glVertex3f (ptricmds[2] * s * w + x , ptricmds[3] * t * h + y , 1.0f);
+									}
+									glEnd ( );
+									glDisable (GL_LINE_SMOOTH);
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				glColor4f (0.0f, 0.0f, 0.0f, 0.0f);
+				glRectf (x, y, x + w, y + h);
+
+				glEnable (GL_TEXTURE_2D);
+				glColor4f (1.0f, 1.0f, 1.0f, 1.0f);
+				glBindTexture (GL_TEXTURE_2D, g_viewerSettings.texture + 3); //d_textureNames[0]);
+
+				glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+				glBegin (GL_TRIANGLE_STRIP);
+
+				glTexCoord2f (0, 0);
+				glVertex2f (x, y);
+
+				glTexCoord2f (1, 0);
+				glVertex2f (x + w, y);
+
+				glTexCoord2f (0, 1);
+				glVertex2f (x, y + h);
+
+				glTexCoord2f (1, 1);
+				glVertex2f (x + w, y + h);
+
+				glEnd ();
+			}
 			glPopMatrix ();
 
 			glClear (GL_DEPTH_BUFFER_BIT);
@@ -394,6 +505,7 @@ GlWindow::draw ()
 
 	if (g_viewerSettings.showBackground && d_textureNames[0] && !g_viewerSettings.showTexture)
 	{
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glMatrixMode (GL_PROJECTION);
 		glLoadIdentity ();
 
@@ -435,7 +547,7 @@ GlWindow::draw ()
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
-	perspectiveGL (65.0f, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
+	perspectiveGL (g_viewerSettings.yaw, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
 
 	glMatrixMode (GL_MODELVIEW);
 	glPushMatrix ();
@@ -538,6 +650,110 @@ GlWindow::draw ()
 			glEnable (GL_CULL_FACE);
 	}
 
+	if (g_viewerSettings.showCrosshair)
+	{
+		glMatrixMode (GL_PROJECTION);
+		glPushMatrix ();
+		glLoadIdentity ();
+		glOrtho (0.0f, w2 (), h2 (), 0.0, 0.0, 1.0);
+		glMatrixMode (GL_MODELVIEW);
+		glLoadIdentity ();
+		glDisable (GL_DEPTH_TEST);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable (GL_BLEND);
+		glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+		float w = (w2 () - 27.0f) * 0.5f;
+		float h = (h2 () - 27.0f) * 0.5f;
+		glDisable (GL_TEXTURE_2D);
+		glColor4f (g_viewerSettings.guColor[0], g_viewerSettings.guColor[1], g_viewerSettings.guColor[2], 1.0f);
+		float w2 = w + 10.0f;
+		float w3 = w + 12.0f;
+		float w4 = w + 13.0f;
+		float w5 = w + 14.0f;
+		float w6 = w + 15.0f;
+		float w7 = w + 17.0f;
+		float w8 = w + 27.0f;
+
+		float h2 = h + 10.0f;
+		float h3 = h + 12.0f;
+		float h4 = h + 13.0f;
+		float h5 = h + 14.0f;
+		float h6 = h + 15.0f;
+		float h7 = h + 17.0f;
+		float h8 = h + 27.0f;
+		glRectf (w4, h, w5, h2);
+		glRectf (w4, h7, w5, h8);
+		glRectf (w, h4, w2, h5);
+		glRectf (w7, h4, w8, h5);
+		glRectf (w4, h4, w5, h5);
+		glColor4f (g_viewerSettings.guColor[0], g_viewerSettings.guColor[1], g_viewerSettings.guColor[2], 0.25f);
+		glRectf (w3, h, w4, h2);
+		glRectf (w5, h, w6, h2);
+		glRectf (w3, h7, w4, h8);
+		glRectf (w5, h7, w6, h8);
+		glRectf (w, h3, w2, h4);
+		glRectf (w, h5, w2, h6);
+		glRectf (w7, h3, w8, h4);
+		glRectf (w7, h5, w8, h6);
+		glRectf (w4, h3, w5, h4);
+		glRectf (w4, h5, w5, h6);
+		glRectf (w3, h4, w4, h5);
+		glRectf (w5, h4, w6, h5);
+		glColor4f (g_viewerSettings.guColor[0], g_viewerSettings.guColor[1], g_viewerSettings.guColor[2], 0.125f);
+		glRectf (w3, h3, w4, h4);
+		glRectf (w5, h3, w6, h4);
+		glRectf (w3, h5, w4, h6);
+		glRectf (w5, h5, w6, h6);
+	}
+
+	if (g_viewerSettings.showGuideLines)
+	{
+		glMatrixMode (GL_PROJECTION);
+		glPushMatrix ();
+		glLoadIdentity ();
+
+		glOrtho (0.0f, w2 (), h2 (), 0.0f, 0.0f, 1.0f);
+
+		glMatrixMode (GL_MODELVIEW);
+		glLoadIdentity ();
+
+		glDisable (GL_DEPTH_TEST);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable (GL_BLEND);
+
+		glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+		glDisable (GL_TEXTURE_2D);
+
+		glColor4f (g_viewerSettings.guColor[0], g_viewerSettings.guColor[1], g_viewerSettings.guColor[2], 0.5f);
+
+		glEnable (GL_LINE_SMOOTH);
+		glEnable (GL_LINE_STIPPLE);
+
+		glLineWidth (1.0f);
+		glLineStipple (2, 0xFAFA);
+
+		float w = w2 () - 0.5f;
+		glBegin (GL_LINES);
+		glVertex2f (w, h2 () + 14.0f);
+		glVertex2f (w, h2 ());
+		glEnd ();
+
+		glDisable (GL_LINE_STIPPLE);
+		glLineWidth (3.0f);
+
+		glBegin (GL_LINES);
+		w = w2 () * 0.085f;
+		glVertex2f (w, 0.0f);
+		glVertex2f (w, h2 ());
+		w = w2 () * 0.915f;
+		glVertex2f (w, 0.0f);
+		glVertex2f (w, h2 ());
+		glEnd ();
+
+		glLineWidth (1.0f);
+		glDisable (GL_LINE_SMOOTH);
+	}
+
 	glPopMatrix ();
 }
 
@@ -546,7 +762,7 @@ GlWindow::draw ()
 int
 GlWindow::loadTexture (const char *filename, int name)
 {
-	if (!filename || !strlen (filename))
+	if (!filename || '\0' == filename[0])
 	{
 		if (d_textureNames[name])
 		{
@@ -554,9 +770,9 @@ GlWindow::loadTexture (const char *filename, int name)
 			d_textureNames[name] = 0;
 
 			if (name == 0)
-				strcpy (g_viewerSettings.backgroundTexFile, "");
+				g_viewerSettings.backgroundTexFile[0] = '\0';
 			else
-				strcpy (g_viewerSettings.groundTexFile, "");
+				g_viewerSettings.groundTexFile[0] = '\0';
 		}
 
 		return 0;

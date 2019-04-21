@@ -14,11 +14,14 @@
 #include <mx/gl.h>
 #include "StudioModel.h"
 #include "ViewerSettings.h"
+#include "ControlPanel.h"
+#include "GlWindow.h"
 #include <string.h>
+#include <stdio.h>
 
 #pragma warning( disable : 4244 ) // double to float
 
-
+int g_polys;
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -649,7 +652,8 @@ void StudioModel::DrawModel( )
 
 	SetUpBones ( );
 
-	SetupLighting( );
+	SetupLighting ( );
+	g_polys = 0;
 
 	for (i=0 ; i < m_pstudiohdr->numbodyparts ; i++) 
 	{
@@ -657,6 +661,8 @@ void StudioModel::DrawModel( )
 		if (g_viewerSettings.transparency > 0.0f)
 			DrawPoints( );
 	}
+
+	g_ControlPanel->setDrawnPolysInfo();
 
 	// draw bones
 	if (g_viewerSettings.showBones && !g_viewerSettings.use3dfx)
@@ -805,6 +811,19 @@ void StudioModel::DrawModel( )
 		}
 	}
 
+	if (g_viewerSettings.showEyePosition && !g_viewerSettings.use3dfx)
+	{
+		glDisable (GL_TEXTURE_2D);
+		glDisable (GL_CULL_FACE);
+		glDisable (GL_DEPTH_TEST);
+		glPointSize(7.0f);
+		glColor3f(1.0f, 0.0f, 1.0f);
+		glBegin(GL_POINTS);
+		glVertex3f(m_pstudiohdr->eyeposition[0], m_pstudiohdr->eyeposition[1], m_pstudiohdr->eyeposition[2]);
+		glEnd();
+		glPointSize(1.0f);
+	}
+
 	glPopMatrix ();
 }
 
@@ -847,12 +866,6 @@ void StudioModel::DrawPoints ( )
 		VectorTransform (pstudioverts[i], g_bonetransform[pvertbone[i]], g_pxformverts[i]);
 	}
 
-	if (g_viewerSettings.transparency < 1.0f)
-	{
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
 //
 // clip and draw all triangles
 //
@@ -874,14 +887,130 @@ void StudioModel::DrawPoints ( )
 			lv[1] = lv_tmp * g_lightcolor[1];
 			lv[2] = lv_tmp * g_lightcolor[2];
 		}
+		g_polys += pmesh[j].numtris;
 	}
 
 	// glCullFace(GL_FRONT);
+
+	for (j = 0; j < m_pmodel->nummesh; j++)
+        {
+                float s, t;
+                short           *ptricmds;
+                float coords2d[2];
+                int tri_type;
+
+                pmesh = (mstudiomesh_t *)((byte *)m_pstudiohdr + m_pmodel->meshindex) + j;
+                ptricmds = (short *)((byte *)m_pstudiohdr + pmesh->triindex);
+
+                s = 1.0/(float)ptexture[pskinref[pmesh->skinref]].width;
+                t = 1.0/(float)ptexture[pskinref[pmesh->skinref]].height;
+
+                glBindTexture( GL_TEXTURE_2D, pskinref[pmesh->skinref] + 3);
+                glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable (GL_ALPHA_TEST);
+                glEnable (GL_BLEND);
+                if (ptexture[pskinref[pmesh->skinref]].flags == (STUDIO_NF_ADDITIVE|STUDIO_NF_CHROME)
+		    || ptexture[pskinref[pmesh->skinref]].flags == STUDIO_NF_ADDITIVE
+		    || ptexture[pskinref[pmesh->skinref]].flags == STUDIO_HAS_CHROME)
+			continue;
+
+                while (i = *(ptricmds++))
+                {
+                        if (i < 0)
+                        {
+                                tri_type = GL_TRIANGLE_FAN;
+                                i = -i;
+                        }
+                        else
+                        {
+                                tri_type = GL_TRIANGLE_STRIP;
+                        }
+
+                        glBegin (tri_type);
+                        for( ; i > 0; i--, ptricmds += 4)
+                        {
+                                if (ptexture[pskinref[pmesh->skinref]].flags & STUDIO_NF_CHROME)
+                                {
+                                        coords2d[0] = g_chrome[ptricmds[1]][0] * s;
+                                        coords2d[1] = g_chrome[ptricmds[1]][1] * t;
+                                }
+                                else
+                                {
+                                        coords2d[0] = ptricmds[2] * s;
+                                        coords2d[1] = ptricmds[3] * t;
+                                }
+  
+                                // FIX: put these in as integer coords, not floats
+                                glTexCoord2f (coords2d[0], coords2d[1]);
+                                lv = g_pvlightvalues[ptricmds[1]];
+                                glColor4f (lv[0], lv[1], lv[2], g_viewerSettings.transparency);
+                                 
+                                av = g_pxformverts[ptricmds[0]];
+                                glVertex3f (av[0], av[1], av[2]);
+                        }
+                        glEnd ( );
+                }
+        }
+
+	for (j = 0; j < m_pmodel->nummesh; j++)
+        {
+                float s, t;
+                short           *ptricmds;
+		int tri_type;
+
+                pmesh = (mstudiomesh_t *)((byte *)m_pstudiohdr + m_pmodel->meshindex) + j;
+                ptricmds = (short *)((byte *)m_pstudiohdr + pmesh->triindex);
+                                        
+                s = 1.0/(float)ptexture[pskinref[pmesh->skinref]].width;
+                t = 1.0/(float)ptexture[pskinref[pmesh->skinref]].height;
+                         
+                //glBindTexture( GL_TEXTURE_2D, ptexture[pskinref[pmesh->skinref]].index );
+                glBindTexture( GL_TEXTURE_2D, pskinref[pmesh->skinref] + 3);
+                glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glEnable (GL_ALPHA_TEST);
+                glEnable (GL_BLEND);
+
+                if (!(ptexture[pskinref[pmesh->skinref]].flags & STUDIO_NF_TRANSPARENT))
+			continue;
+
+		while (i = *(ptricmds++))
+		{
+			if (i < 0)
+			{
+				tri_type = GL_TRIANGLE_FAN;
+				i = -i;
+			}
+			else
+			{
+				tri_type = GL_TRIANGLE_STRIP;
+			}
+
+			glBegin (tri_type);
+			for( ; i > 0; i--, ptricmds += 4)
+			{
+				// FIX: put these in as integer coords, not floats
+				glTexCoord2f (ptricmds[2] * s, ptricmds[3] * t);
+
+				lv = g_pvlightvalues[ptricmds[1]];
+				glColor4f (lv[0], lv[1], lv[2], g_viewerSettings.transparency);
+
+				av = g_pxformverts[ptricmds[0]];
+				glVertex3f (av[0], av[1], av[2]);
+			}
+			glEnd ( );
+		}
+        }
 
 	for (j = 0; j < m_pmodel->nummesh; j++) 
 	{
 		float s, t;
 		short		*ptricmds;
+		float coords2d[2];
+		int tri_type;
 
 		pmesh = (mstudiomesh_t *)((byte *)m_pstudiohdr + m_pmodel->meshindex) + j;
 		ptricmds = (short *)((byte *)m_pstudiohdr + pmesh->triindex);
@@ -889,67 +1018,105 @@ void StudioModel::DrawPoints ( )
 		s = 1.0/(float)ptexture[pskinref[pmesh->skinref]].width;
 		t = 1.0/(float)ptexture[pskinref[pmesh->skinref]].height;
 
-		//glBindTexture( GL_TEXTURE_2D, ptexture[pskinref[pmesh->skinref]].index );
 		glBindTexture( GL_TEXTURE_2D, pskinref[pmesh->skinref] + 3);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glDisable (GL_ALPHA_TEST);
+		if (g_viewerSettings.renderMode == RM_TEXTURED)
+			glBlendFunc (GL_ONE, GL_ONE);
+		else
+			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable (GL_BLEND);
 
-		if (ptexture[pskinref[pmesh->skinref]].flags & STUDIO_NF_CHROME)
+		if (!(ptexture[pskinref[pmesh->skinref]].flags & (STUDIO_NF_ADDITIVE|STUDIO_NF_CHROME)))
+			continue;
+
+		while (i = *(ptricmds++))
 		{
-			while (i = *(ptricmds++))
+			if (i < 0)
 			{
-				if (i < 0)
+				tri_type = GL_TRIANGLE_FAN;
+				i = -i;
+			}
+			else
+			{
+				tri_type = GL_TRIANGLE_STRIP;
+			}
+
+			glBegin (tri_type);
+			for( ; i > 0; i--, ptricmds += 4)
+			{
+				if (ptexture[pskinref[pmesh->skinref]].flags & STUDIO_NF_CHROME)
 				{
-					glBegin( GL_TRIANGLE_FAN );
-					i = -i;
+					coords2d[0] = g_chrome[ptricmds[1]][0] * s;
+					coords2d[1] = g_chrome[ptricmds[1]][1] * t;
 				}
 				else
 				{
-					glBegin( GL_TRIANGLE_STRIP );
+					coords2d[0] = ptricmds[2] * s;
+					coords2d[1] = ptricmds[3] * t;
 				}
 
+				// FIX: put these in as integer coords, not floats
+				glTexCoord2f (coords2d[0], coords2d[1]);
+				lv = g_pvlightvalues[ptricmds[1]];
+				glColor4f (lv[0], lv[1], lv[2], g_viewerSettings.transparency);
 
-				for( ; i > 0; i--, ptricmds += 4)
-				{
-					// FIX: put these in as integer coords, not floats
-					glTexCoord2f(g_chrome[ptricmds[1]][0]*s, g_chrome[ptricmds[1]][1]*t);
-					
-					lv = g_pvlightvalues[ptricmds[1]];
-					glColor4f( lv[0], lv[1], lv[2], g_viewerSettings.transparency);
+				av = g_pxformverts[ptricmds[0]];
+				glVertex3f (av[0], av[1], av[2]);
+			}
+			glEnd ( );
+		}	
+	}
 
-					av = g_pxformverts[ptricmds[0]];
-					glVertex3f(av[0], av[1], av[2]);
-				}
-				glEnd( );
-			}	
-		} 
-		else 
+	if (g_viewerSettings.renderMode == RM_WIREFRAME)
+        {
+                glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+                glDisable (GL_TEXTURE_2D);
+                glDisable (GL_CULL_FACE);
+                glEnable (GL_DEPTH_TEST);
+		return;
+        }
+
+	if (g_viewerSettings.showWireframeOverlay)
+	{
+		for (j = 0; j < m_pmodel->nummesh; j++)
 		{
+			short *ptricmds;
+			int tri_type;
+			pmesh = (mstudiomesh_t *)((byte *)m_pstudiohdr + m_pmodel->meshindex) + j;
+			ptricmds = (short *)((byte *)m_pstudiohdr + pmesh->triindex);
+
+			glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+			glDisable (GL_TEXTURE_2D);
+			glDisable (GL_CULL_FACE);
+			glEnable (GL_DEPTH_TEST);
+			glLineWidth (1.0);
 			while (i = *(ptricmds++))
-			{
-				if (i < 0)
-				{
-					glBegin( GL_TRIANGLE_FAN );
-					i = -i;
-				}
-				else
-				{
-					glBegin( GL_TRIANGLE_STRIP );
-				}
+                        {
+                                if (i < 0)
+                                {
+                                        tri_type = GL_TRIANGLE_FAN;
+                                        i = -i;
+                                }
+                                else
+                                {
+                                        tri_type = GL_TRIANGLE_STRIP;
+                                }
 
+				glBegin (tri_type);
+                                for( ; i > 0; i--, ptricmds += 4)
+                                {
+                                        glColor4f (0.85, 0, 0, g_viewerSettings.transparency);
 
-				for( ; i > 0; i--, ptricmds += 4)
-				{
-					// FIX: put these in as integer coords, not floats
-					glTexCoord2f(ptricmds[2]*s, ptricmds[3]*t);
-					
-					lv = g_pvlightvalues[ptricmds[1]];
-					glColor4f( lv[0], lv[1], lv[2], g_viewerSettings.transparency);
-
-					av = g_pxformverts[ptricmds[0]];
-					glVertex3f(av[0], av[1], av[2]);
-				}
-				glEnd( );
-			}	
+                                        av = g_pxformverts[ptricmds[0]];
+                                        glVertex3f (av[0], av[1], av[2]);
+                                }
+                                glEnd ( );
+                        }
 		}
 	}
+
+	setupRenderMode ();
 }
 
