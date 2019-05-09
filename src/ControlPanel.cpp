@@ -124,8 +124,8 @@ ControlPanel::ControlPanel (mxWindow *parent)
 
 	lTextureScale = new mxLabel (wTexture, 5, 47, 150, 15, "Scale Texture View (1x)");
 	slTextureScale = new mxSlider (wTexture, 0, 60, 160, 18, IDC_TEXTURESCALE);
-	slTextureScale->setRange (1, 4);
-	slTextureScale->setSteps (4, 1);
+	slTextureScale->setRange (0, 100);
+	slTextureScale->setSteps (25, 1);
 	mxToolTip::add (slTextureScale, "Scale texture view size");
 	cbChrome = new mxCheckBox (wTexture, 180, 5, 70, 18, "Chrome", IDC_CHROME);
 	cbAdditive = new mxCheckBox (wTexture, 180, 25, 70, 18, "Additive", IDC_ADDITIVE);
@@ -698,11 +698,11 @@ ControlPanel::handleEvent (mxEvent *event)
 
 		case IDC_TEXTURESCALE:
 		{
-			int texScale = ((mxSlider *) event->widget)->getValue ();
-			g_viewerSettings.textureScale =  1.0f + (float) texScale * 4.0f / 100.0f;
-			sprintf (str, "Scale Texture View (%dx)", texScale);
+			float texScale = ((mxSlider *) event->widget)->getValue ();
+			g_viewerSettings.textureScale = 1.0f + texScale * 4.0f / 100.0f;
+			sprintf (str, "Scale Texture View (%.fx)", g_viewerSettings.textureScale);
 			lTextureScale->setLabel (str);
-			d_GlWindow->redraw ();
+			//d_GlWindow->redraw ();
 		}
 		break;
 
@@ -1342,9 +1342,9 @@ ControlPanel::initTextures ()
 		g_viewerSettings.texture = 0;
 		if (hdr->numtextures > 0)
 		{
-			cbChrome->setChecked ((ptextures[0].flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
-			cbAdditive->setChecked ((ptexture->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
-			cbTransparent->setChecked ((ptexture->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
+			cbChrome->setChecked ((ptextures->flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
+			cbAdditive->setChecked ((ptextures->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
+			cbTransparent->setChecked ((ptextures->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
 			setMesh(0);
 		}
 	}

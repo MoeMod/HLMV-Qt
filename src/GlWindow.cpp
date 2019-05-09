@@ -49,7 +49,7 @@ void perspectiveGL (GLfloat fovY, GLfloat aspect, GLfloat near, GLfloat far)
 {
 	GLfloat w, h;
 
-	h = tan (fovY / 360 * Q_PI) * zNear;
+	h = tan (fovY / 360 * Q_PI) * near;
 
 	w = h * aspect;
 
