@@ -21,6 +21,7 @@
 #include <mx/mx.h>
 #include <mx/gl.h>
 #include <mx/mxTga.h>
+#include <mx/mxShellExec.h>
 #include "mdlviewer.h"
 #include "GlWindow.h"
 #include "ControlPanel.h"
@@ -180,8 +181,8 @@ MDLViewer::MDLViewer ()
 #ifdef WIN32
 	menuOptions->addSeparator ();
 	menuOptions->add ("Make Screenshot...", IDC_OPTIONS_MAKESCREENSHOT);
-	menuOptions->add ("Dump Model Info", IDC_OPTIONS_DUMP);
 #endif
+	menuOptions->add ("Dump Model Info", IDC_OPTIONS_DUMP);
 	menuOptions->addSeparator ();
 	menuOptions->add ("Set Sound Folder...", IDC_OPTIONS_SOUNDFOLDER);
 	menuOptions->addSeparator ();
@@ -192,10 +193,9 @@ MDLViewer::MDLViewer ()
 	menuTools->add ("Decompile Model...", IDC_TOOLS_MODELDECOMPILE);
 	menuTools->add ("Compile Model...", IDC_TOOLS_MODELCOMPILE);
 	menuTools->add ("Edit QC File...", IDC_TOOLS_QCFILEEDIT);
-#ifdef WIN32
+
 	menuHelp->add ("Goto Homepage...", IDC_HELP_GOTOHOMEPAGE);
 	menuHelp->addSeparator ();
-#endif
 	menuHelp->add ("Keyboard Shortcuts...", IDC_HELP_KEYBOARDSHORCUTS);
 	menuHelp->addSeparator ();
 	menuHelp->add ("About...", IDC_HELP_ABOUT);
@@ -480,11 +480,9 @@ MDLViewer::handleEvent (mxEvent *event)
 			d_cpl->dumpModelInfo ();
 			break;
 
-#ifdef WIN32
 		case IDC_HELP_GOTOHOMEPAGE:
-			ShellExecute (0, "open", "http://www.swissquake.ch/chumbalum-soft/index.html", 0, 0, SW_SHOW);
+			mx_shellexec (this, "http://www.swissquake.ch/chumbalum-soft/index.html");
 			break;
-#endif
 
 		case IDC_HELP_KEYBOARDSHORCUTS:
 			mxMessageBox (this,

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mx/mx.h>
+#include <mx/mxSound.h>
 #include "pakviewer.h"
 #include "mdlviewer.h"
 #include "GlWindow.h"
@@ -137,9 +138,7 @@ PAKViewer::handleEvent (mxEvent *event)
 			if (event->flags & mxEvent::RightClicked)
 			{
 				pmMenu->setEnabled (1, strstr (d_currLumpName, ".mdl") != 0);
-				pmMenu->setEnabled (2, strstr (d_currLumpName, ".tga") != 0);
-				pmMenu->setEnabled (3, strstr (d_currLumpName, ".tga") != 0);
-				pmMenu->setEnabled (4, strstr (d_currLumpName, ".wav") != 0);
+				pmMenu->setEnabled (2, strstr (d_currLumpName, ".wav") != 0);
 				int ret = pmMenu->popup (tvPAK, event->x, event->y);
 				switch (ret)
 				{
@@ -299,12 +298,11 @@ PAKViewer::OnLoadModel ()
 int
 PAKViewer::OnPlaySound ()
 {
-#ifdef WIN32
 	static char str2[256];
 	char suffix[16] = "";
 
 	// stop any playing sound
-	PlaySound (0, 0, SND_FILENAME | SND_ASYNC);
+	mx_stopsnd ();
 
 	if (strstr (d_currLumpName, ".wav"))
 		sprintf (suffix, "%d%s", 44, ".wav");
@@ -317,9 +315,8 @@ PAKViewer::OnPlaySound ()
 		return 1;
 	}
 
-	PlaySound (str2, 0, SND_FILENAME | SND_ASYNC);
+	mx_playsnd (str2);
 
-#endif
 	return 1;
 }
 

@@ -24,7 +24,7 @@
 #include <string.h>
 #include <mx/mx.h>
 #include <mx/mxBmp.h>
-
+#include <mx/mxShellExec.h>
 
 
 extern const char *g_appTitle;
@@ -743,11 +743,10 @@ ControlPanel::handleEvent (mxEvent *event)
 void
 ControlPanel::dumpModelInfo ()
 {
-#if 0
 	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
 	if (hdr)
 	{
-		DeleteFile ("midump.txt");
+		remove ("midump.txt");
 		FILE *file = fopen ("midump.txt", "wt");
 		if (file)
 		{
@@ -810,7 +809,7 @@ ControlPanel::dumpModelInfo ()
 				fprintf (file, "seqdesc %d.flags: %d\n", i + 1, pseqdescs[i].flags);
 				fprintf (file, "<...>\n");
 			}
-/*
+
 			fprintf (file, "\nnumseqgroups: %d\n", hdr->numseqgroups);
 			for (i = 0; i < hdr->numseqgroups; i++)
 			{
@@ -819,7 +818,7 @@ ControlPanel::dumpModelInfo ()
 				fprintf (file, "\nseqgroup %d.namel: \"%s\"\n", i + 1, pseqgroups[i].name);
 				fprintf (file, "\nseqgroup %d.data: %d\n", i + 1, pseqgroups[i].data);
 			}
-*/
+
 			hdr = g_studioModel.getTextureHeader ();
 			fprintf (file, "\nnumtextures: %d\n", hdr->numtextures);
 			fprintf (file, "textureindex: %d\n", hdr->textureindex);
@@ -857,10 +856,9 @@ ControlPanel::dumpModelInfo ()
 
 			fclose (file);
 
-			ShellExecute ((HWND) getHandle (), "open", "midump.txt", 0, 0, SW_SHOW);
+			mx_shellexec (this, "midump.txt");
 		}
 	}
-#endif
 }
 
 
