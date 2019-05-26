@@ -75,7 +75,6 @@ public:
 	virtual int handleEvent (mxEvent *event);
 	int OnPAKViewer ();
 	int OnLoadModel ();
-	int OnLoadTexture (int pos);
 	int OnPlaySound ();
 	int OnExtract ();
 

@@ -24,7 +24,6 @@
 #include "GlWindow.h"
 #include "StudioModel.h"
 #include "ControlPanel.h"
-#include "FileAssociation.h"
 
 
 
@@ -96,13 +95,9 @@ PAKViewer::PAKViewer (mxWindow *window)
 	tvPAK = new mxTreeView (this, 0, 0, 0, 0, IDC_PAKVIEWER);
 	pmMenu = new mxPopupMenu ();
 	pmMenu->add ("Load Model", 1);
+	pmMenu->add ("Play Sound", 2);
 	pmMenu->addSeparator ();
-	pmMenu->add ("Load Background", 2);
-	pmMenu->add ("Load Ground", 3);
-	pmMenu->addSeparator ();
-	pmMenu->add ("Play Sound", 4);
-	pmMenu->addSeparator ();
-	pmMenu->add ("Extract File...", 5);
+	pmMenu->add ("Extract File...", 3);
 	setLoadEntirePAK (true);
 
 	setVisible (false);
@@ -153,18 +148,10 @@ PAKViewer::handleEvent (mxEvent *event)
 					break;
 
 				case 2:
-					OnLoadTexture (0);
-					break;
-
-				case 3:
-					OnLoadTexture (1);
-					break;
-
-				case 4:
 					OnPlaySound ();
 					break;
 
-				case 5:
+				case 3:
 					OnExtract ();
 					break;
 				}
@@ -175,61 +162,13 @@ PAKViewer::handleEvent (mxEvent *event)
 				char e[16];
 
 				strncpy (e, mx_getextension (d_currLumpName), 16);
-				int mode = g_FileAssociation->getMode (&e[1]);
-				if (mode == -1)
-					return 1;
 
-				char *program = g_FileAssociation->getProgram (&e[1]);
+				if (!strcmp (e, ".mdl"))
+					OnLoadModel ();
+				else if (!strcmp (e, ".wav"))
+					OnPlaySound ();
 
-#ifdef WIN32
-				if (mode == 0)
-				{
-					char str[256];
-					_makeTempFileName (str, e);
-					if (!pak_ExtractFile (d_pakFile, d_currLumpName, str))
-						mxMessageBox (this, "Error extracting from PAK file.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-					else
-					{
-						if (program)
-						{
-							char path[256];
-							strcpy (path, program);
-							strcat (path, " ");
-							strcat (path, str);
-							if ((int) WinExec (path, SW_SHOW) <= 32)
-								mxMessageBox (this, "Error executing specified program.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-						}
-					}
-				}
-
-				// associated program
-				else if (mode == 1)
-				{
-					char str[256];
-					_makeTempFileName (str, e);
-					if (!pak_ExtractFile (d_pakFile, d_currLumpName, str))
-						mxMessageBox (this, "Error extracting from PAK file.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-					else
-						if ((int) ShellExecute ((HWND) getHandle (), "open", str, 0, 0, SW_SHOW) <= 32)
-							mxMessageBox (this, "Error executing document with associated program.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-				}
-
-				// HLMV default
-				else	
-#endif
-				if (mode == 2)
-				{
-					if (!strcmp (e, ".mdl"))
-						OnLoadModel ();
-
-					else if (!strcmp (e, ".tga"))
-						OnLoadTexture (0);
-
-					else if (!strcmp (e, ".wav"))
-						OnPlaySound ();
-
-					return 1;
-				}
+				return 1;
 			}
 			
 			return OnPAKViewer ();
@@ -351,38 +290,6 @@ PAKViewer::OnLoadModel ()
 	strcpy (suffix, ".mdl");
 	_makeTempFileName (str2, suffix);
 	g_ControlPanel->loadModel (str2);
-
-	return 1;
-}
-
-
-
-int
-PAKViewer::OnLoadTexture (int pos)
-{
-	static char str2[256];
-	char suffix[16] = "";
-
-	if (strstr (d_currLumpName, ".tga"))
-		sprintf (suffix, "%d%s", pos, ".tga");
-
-	_makeTempFileName (str2, suffix);
-
-	if (!pak_ExtractFile (d_pakFile, d_currLumpName, str2))
-	{
-		mxMessageBox (this, "Error extracting from PAK file.", g_appTitle, MX_MB_OK | MX_MB_ERROR);
-		return 1;
-	}
-
-	if (g_MDLViewer->getGlWindow ()->loadTexture (str2, pos))
-	{
-		if (pos == 0)
-			g_ControlPanel->setShowBackground (true);
-		else
-			g_ControlPanel->setShowGround (true);
-	}
-	else
-		mxMessageBox (this, "Error loading texture.",  g_appTitle, MX_MB_OK | MX_MB_ERROR);
 
 	return 1;
 }

@@ -26,7 +26,6 @@
 #include "ControlPanel.h"
 #include "StudioModel.h"
 #include "pakviewer.h"
-#include "FileAssociation.h"
 
 
 
@@ -184,7 +183,6 @@ MDLViewer::MDLViewer ()
 	menuOptions->add ("Dump Model Info", IDC_OPTIONS_DUMP);
 #endif
 	menuOptions->addSeparator ();
-	menuOptions->add ("File Associations...", IDC_OPTIONS_FILEASSOCIATIONS);
 	menuOptions->add ("Set Sound Folder...", IDC_OPTIONS_SOUNDFOLDER);
 	menuOptions->addSeparator ();
 	menuOptions->add ("Save Options...", IDC_OPTIONS_SAVE);
@@ -214,7 +212,6 @@ MDLViewer::MDLViewer ()
 
 	// finally create the pakviewer window
 	d_PAKViewer = new PAKViewer (this);
-	g_FileAssociation = new FileAssociation ();
 
 	loadRecentFiles ();
 	initRecentFiles ();
@@ -481,11 +478,6 @@ MDLViewer::handleEvent (mxEvent *event)
 
 		case IDC_OPTIONS_DUMP:
 			d_cpl->dumpModelInfo ();
-			break;
-
-		case IDC_OPTIONS_FILEASSOCIATIONS:
-			g_FileAssociation->setAssociation (0);
-			g_FileAssociation->setVisible (true);
 			break;
 
 #ifdef WIN32
