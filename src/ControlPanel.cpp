@@ -618,7 +618,7 @@ ControlPanel::handleEvent (mxEvent *event)
 
 		case IDC_EXPORTTEXTURE:
 		{
-			char *ptr = (char *) mxGetSaveFileName (this, "", "*.bmp");
+			char *ptr = (char *) mxGetSaveFileName (this, "", "Windows Bitmap (*.bmp)");
 			if (!ptr)
 				break;
 

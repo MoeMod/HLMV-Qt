@@ -45,15 +45,15 @@ float g_lambert = 1.5;
 // aspect   - Aspect ratio of the viewport
 // near    - The near clipping distance
 // far     - The far clipping distance
-void perspectiveGL (GLfloat fovY, GLfloat aspect, GLfloat near, GLfloat far)
+void perspectiveGL (GLfloat fovY, GLfloat aspect, GLfloat _near, GLfloat _far)
 {
 	GLfloat w, h;
 
-	h = tan (fovY / 360 * Q_PI) * near;
+	h = tan (fovY / 360 * Q_PI) * _near;
 
 	w = h * aspect;
 
-	glFrustum (-w, w, -h, h, near, far);
+	glFrustum (-w, w, -h, h, _near, _far);
 }
 
 GlWindow::GlWindow (mxWindow *parent, int x, int y, int w, int h, const char *label, int style)

@@ -248,7 +248,7 @@ MDLViewer::handleEvent (mxEvent *event)
 		{
 		case IDC_FILE_LOADMODEL:
 		{
-			const char *ptr = mxGetOpenFileName (this, 0, "*.mdl");
+			const char *ptr = mxGetOpenFileName (this, 0, "PC Half-Life Models (*.mdl);;PS2 Half-Life Models (*.dol)");
 			if (ptr)
 			{
 				int i;
@@ -285,7 +285,7 @@ MDLViewer::handleEvent (mxEvent *event)
 
 		case IDC_FILE_SAVEMODEL:
 		{
-			const char *ptr = (char *) mxGetSaveFileName (this, "", "*.mdl");
+			const char *ptr = (char *) mxGetSaveFileName (this, "", "PC Half-Life Models (*.mdl)");
 			if (!ptr)
 				break;
 
@@ -307,7 +307,7 @@ MDLViewer::handleEvent (mxEvent *event)
 		case IDC_FILE_LOADBACKGROUNDTEX:
 		case IDC_FILE_LOADGROUNDTEX:
 		{
-			const char *ptr = mxGetOpenFileName (this, 0, "*.*");
+			const char *ptr = mxGetOpenFileName (this, 0, "All Files (*.*)");
 			if (ptr)
 			{
 				if (d_GlWindow->loadTexture (ptr, event->action - IDC_FILE_LOADBACKGROUNDTEX))
@@ -333,7 +333,7 @@ MDLViewer::handleEvent (mxEvent *event)
 
 		case IDC_FILE_OPENPAKFILE:
 		{
-			const char *ptr = mxGetOpenFileName (this, "\\sierra\\half-life\\valve", "*.pak");
+			const char *ptr = mxGetOpenFileName (this, "\\sierra\\half-life\\valve", "PAK Files (*.pak)");
 			if (ptr)
 			{
 				int i;
@@ -466,7 +466,7 @@ MDLViewer::handleEvent (mxEvent *event)
 
 		case IDC_OPTIONS_MAKESCREENSHOT:
 		{
-			char *ptr = (char *) mxGetSaveFileName (this, "", "*.tga");
+			char *ptr = (char *) mxGetSaveFileName (this, "", "TARGA Image Files (*.tga)");
 			if (ptr)
 			{
 				if (!strstr (ptr, ".tga"))
