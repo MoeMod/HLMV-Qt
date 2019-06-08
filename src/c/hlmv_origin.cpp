@@ -13,4 +13,7 @@ void QtGuiApplication1::updateWeaponOriginSettings()
 	g_viewerSettings.vieworigintrans[1] = static_cast<float>(ui.leOriginY->value());
 	g_viewerSettings.vieworigintrans[2] = static_cast<float>(ui.leOriginZ->value());
 
+	g_viewerSettings.viewfov = static_cast<float>(ui.leFOV->value());
+	g_viewerSettings.viewaspect = static_cast<float>(ui.leAspec->value());
+
 }

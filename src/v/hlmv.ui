@@ -1181,7 +1181,16 @@ Blends: 0
              <item row="3" column="1" colspan="2">
               <widget class="QDoubleSpinBox" name="leAspec">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
+               </property>
+               <property name="maximum">
+                <double>10.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.050000000000000</double>
+               </property>
+               <property name="value">
+                <double>0.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -1207,7 +1216,7 @@ Blends: 0
              <item row="2" column="1" colspan="2">
               <widget class="QDoubleSpinBox" name="leFOV">
                <property name="enabled">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
                <property name="correctionMode">
                 <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
@@ -2215,6 +2224,38 @@ in your model's QC file.</string>
     <hint type="sourcelabel">
      <x>507</x>
      <y>245</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>leFOV</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>QtGuiApplication1Class</receiver>
+   <slot>updateWeaponOriginSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>395</x>
+     <y>269</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>leAspec</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>QtGuiApplication1Class</receiver>
+   <slot>updateWeaponOriginSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>395</x>
+     <y>300</y>
     </hint>
     <hint type="destinationlabel">
      <x>299</x>

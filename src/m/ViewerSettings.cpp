@@ -58,6 +58,8 @@ InitViewerSettings (void)
 	g_viewerSettings.textureScale = 1.0f;
 
 	g_viewerSettings.vieworiginmode = false;
+	g_viewerSettings.viewfov = 90.0f;
+	g_viewerSettings.viewaspect = 0.0f;
 
 }
 

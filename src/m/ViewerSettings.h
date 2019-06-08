@@ -101,6 +101,7 @@ typedef struct
 	bool righthand;
 	float vieworigintrans[3];
 	float viewfov;
+	float viewaspect;
 } ViewerSettings;
 
 

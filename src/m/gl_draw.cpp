@@ -310,7 +310,17 @@ void CHLMV_GL_Draw::Draw()
 
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
-	perspectiveGL (g_viewerSettings.yaw, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
+	if(!g_viewerSettings.vieworiginmode)
+	{
+		perspectiveGL (g_viewerSettings.yaw, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
+	}
+	else
+	{
+		if(g_viewerSettings.viewaspect > 0.0f)
+			perspectiveGL (g_viewerSettings.viewfov, 1 / g_viewerSettings.viewaspect, 1.0f, 4096.0f);
+		else
+			perspectiveGL (g_viewerSettings.viewfov, (GLfloat) w () / (GLfloat) h (), 1.0f, 4096.0f);
+	}
 
 	glMatrixMode (GL_MODELVIEW);
 	glPushMatrix ();
