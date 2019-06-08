@@ -23,6 +23,9 @@ void QtGuiApplication1::initSequences ()
 
 void QtGuiApplication1::setSequence(int index)
 {
+	if(index < 0)
+		return;
+
 	ui.cSequence->setCurrentRow(index);
 	ui.cWpSequence->setCurrentIndex (index);
 

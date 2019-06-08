@@ -36,6 +36,9 @@ void QtGuiApplication1::initBodyparts ()
 
 void QtGuiApplication1::setBodypart (int index)
 {
+	if(index < 0)
+		return;
+
 	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
 	if (hdr)
 	{
@@ -57,10 +60,11 @@ void QtGuiApplication1::setBodypart (int index)
 	}
 }
 
-
-
 void QtGuiApplication1::setSubmodel (int index)
 {
+	if(index < 0)
+		return;
+
 	g_studioModel.SetBodygroup (ui.cBodypart->currentIndex (), index);
 	g_viewerSettings.submodels[ui.cBodypart->currentIndex ()] = index;
 }
@@ -97,6 +101,9 @@ void QtGuiApplication1::initBoneControllers ()
 
 void QtGuiApplication1::setBoneController (int index)
 {
+	if(index < 0)
+		return;
+
 	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
 	if (hdr)
 	{
@@ -125,6 +132,8 @@ void QtGuiApplication1::setBoneControllerValue (int index, float value)
 
 void QtGuiApplication1::setBoneControllerCurrentValue (int value)
 {
+	if(!ui.cController->count())
+		return;
 	setBoneControllerValue(ui.cController->currentIndex(), static_cast<float>(value));
 }
 
@@ -190,6 +199,9 @@ void QtGuiApplication1::setModelInfo ()
 
 void QtGuiApplication1::setSkin (int index)
 {
+	if(index < 0)
+		return;
+
 	g_studioModel.SetSkin (index);
 	g_viewerSettings.skin = index;
 }

@@ -79,22 +79,22 @@ void QtGuiApplication1::initMeshList (int index)
 
 void QtGuiApplication1::setTextureCurrent(int index)
 {
-	if (index >= 0)
+	if (index < 0)
+		return;
+
+	g_viewerSettings.texture = index;
+	studiohdr_t *hdr = g_studioModel.getTextureHeader ();
+	if (hdr)
 	{
-		g_viewerSettings.texture = index;
-		studiohdr_t *hdr = g_studioModel.getTextureHeader ();
-		if (hdr)
-		{
-			mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + index;
-			ui.lTexSize->setText (QString().sprintf("Texture (size: %d x %d)", ptexture->width, ptexture->height));
-			ui.cbChrome->setChecked ((ptexture->flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
-			ui.cbAdditive->setChecked ((ptexture->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
-			ui.cbTransparent->setChecked ((ptexture->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
-			ui.cbFullBright->setChecked ((ptexture->flags & STUDIO_NF_FULLBRIGHT) == STUDIO_NF_FULLBRIGHT);
-		}
-		initMeshList (index);
-		ui.openglwidget->repaint ();
+		mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) hdr + hdr->textureindex) + index;
+		ui.lTexSize->setText (QString().sprintf("Texture (size: %d x %d)", ptexture->width, ptexture->height));
+		ui.cbChrome->setChecked ((ptexture->flags & STUDIO_NF_CHROME) == STUDIO_NF_CHROME);
+		ui.cbAdditive->setChecked ((ptexture->flags & STUDIO_NF_ADDITIVE) == STUDIO_NF_ADDITIVE);
+		ui.cbTransparent->setChecked ((ptexture->flags & STUDIO_NF_TRANSPARENT) == STUDIO_NF_TRANSPARENT);
+		ui.cbFullBright->setChecked ((ptexture->flags & STUDIO_NF_FULLBRIGHT) == STUDIO_NF_FULLBRIGHT);
 	}
+	initMeshList (index);
+	ui.openglwidget->repaint ();
 }
 
 void QtGuiApplication1::updateTextureFlags()
