@@ -95,6 +95,12 @@ typedef struct
 	char modelFile[256];
 	char backgroundTexFile[256];
 	char groundTexFile[256];
+
+	// QHLMV spec
+	bool vieworiginmode;
+	bool righthand;
+	float vieworigintrans[3];
+	float viewfov;
 } ViewerSettings;
 
 
@@ -108,8 +114,6 @@ extern "C" {
 #endif
 
 void InitViewerSettings (void);
-int LoadViewerSettings (const char *filename);
-int SaveViewerSettings (const char *filename);
 
 #ifdef __cplusplus
 }

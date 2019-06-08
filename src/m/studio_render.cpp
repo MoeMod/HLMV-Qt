@@ -11,17 +11,18 @@
 // updates:
 // 1-4-99	fixed AdvanceFrame wraping bug
 
-#include <mx/gl.h>
+#include <gl.h>
 #include "StudioModel.h"
 #include "ViewerSettings.h"
-#include "ControlPanel.h"
-#include "GlWindow.h"
 #include <string.h>
 #include <stdio.h>
 
 #pragma warning( disable : 4244 ) // double to float
 
 int g_polys;
+
+vec3_t g_vright = { 50, 50, 0 };		// needs to be set to viewer's right in order for chrome to work
+float g_lambert = 1.5;
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -46,6 +47,39 @@ vec3_t			g_chromeup[MAXSTUDIOBONES];		// chrome vector "up" in bone reference fr
 vec3_t			g_chromeright[MAXSTUDIOBONES];	// chrome vector "right" in bone reference frames
 
 ////////////////////////////////////////////////////////////////////////
+
+void
+setupRenderMode ()
+{
+	if (g_viewerSettings.renderMode == RM_WIREFRAME)
+	{
+		glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+		glDisable (GL_TEXTURE_2D);
+		glDisable (GL_CULL_FACE);
+		glEnable (GL_DEPTH_TEST);
+	}
+	else if (g_viewerSettings.renderMode == RM_FLATSHADED ||
+	         g_viewerSettings.renderMode == RM_SMOOTHSHADED)
+	{
+		glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+		glDisable (GL_TEXTURE_2D);
+		glEnable (GL_CULL_FACE);
+		glEnable (GL_DEPTH_TEST);
+
+		if (g_viewerSettings.renderMode == RM_FLATSHADED)
+			glShadeModel (GL_FLAT);
+		else
+			glShadeModel (GL_SMOOTH);
+	}
+	else if (g_viewerSettings.renderMode == RM_TEXTURED)
+	{
+		glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+		glEnable (GL_TEXTURE_2D);
+		glEnable (GL_CULL_FACE);
+		glEnable (GL_DEPTH_TEST);
+		glShadeModel (GL_SMOOTH);
+	}
+}
 
 void StudioModel::CalcBoneAdj( )
 {
@@ -440,7 +474,16 @@ void StudioModel::SetUpBones ( void )
 		bonematrix[2][3] = pos[i][2];
 
 		if (pbones[i].parent == -1) {
+			if (g_viewerSettings.righthand)
+			{
+				bonematrix[1][0] = -bonematrix[1][0];
+				bonematrix[1][1] = -bonematrix[1][1];
+				bonematrix[1][2] = -bonematrix[1][2];
+				bonematrix[1][3] = -bonematrix[1][3];
+			}
+
 			memcpy(g_bonetransform[i], bonematrix, sizeof(float) * 12);
+
 		} 
 		else {
 			R_ConcatTransforms (g_bonetransform[pbones[i].parent], bonematrix, g_bonetransform[i]);
@@ -662,7 +705,7 @@ void StudioModel::DrawModel( )
 			DrawPoints( );
 	}
 
-	g_ControlPanel->setDrawnPolysInfo();
+	//g_ControlPanel->setDrawnPolysInfo();
 
 	// draw bones
 	if (g_viewerSettings.showBones && !g_viewerSettings.use3dfx)
@@ -916,7 +959,7 @@ void StudioModel::DrawPoints ( )
 		    || ptexture[pskinref[pmesh->skinref]].flags == STUDIO_HAS_CHROME)
 			continue;
 
-                while (i = *(ptricmds++))
+                while ((i = *(ptricmds++)))
                 {
                         if (i < 0)
                         {
@@ -977,7 +1020,7 @@ void StudioModel::DrawPoints ( )
                 if (!(ptexture[pskinref[pmesh->skinref]].flags & STUDIO_NF_TRANSPARENT))
 			continue;
 
-		while (i = *(ptricmds++))
+		while ((i = *(ptricmds++)))
 		{
 			if (i < 0)
 			{
@@ -1031,7 +1074,7 @@ void StudioModel::DrawPoints ( )
 		if (!(ptexture[pskinref[pmesh->skinref]].flags & (STUDIO_NF_ADDITIVE|STUDIO_NF_CHROME)))
 			continue;
 
-		while (i = *(ptricmds++))
+		while ((i = *(ptricmds++)))
 		{
 			if (i < 0)
 			{
@@ -1092,7 +1135,7 @@ void StudioModel::DrawPoints ( )
 			glDisable (GL_CULL_FACE);
 			glEnable (GL_DEPTH_TEST);
 			glLineWidth (1.0);
-			while (i = *(ptricmds++))
+			while ((i = *(ptricmds++)))
                         {
                                 if (i < 0)
                                 {

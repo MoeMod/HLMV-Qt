@@ -14,8 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mx/gl.h>
-#include <GL/glu.h>
+#include <gl.h>
+//#include <GL/glu.h>
 #include "StudioModel.h"
 
 
@@ -26,20 +26,20 @@
 
 
 StudioModel g_studioModel;
-bool bFilterTextures = true;
-
 
 ////////////////////////////////////////////////////////////////////////
 
 static int g_texnum = 3;
 
-
+//Mugsy - upped the maximum texture size to 512. All changes are the replacement of '256'
+//with this define, MAX_TEXTURE_DIMS
+#define MAX_TEXTURE_DIMS 512	
 
 void StudioModel::UploadTexture(mstudiotexture_t *ptexture, byte *data, byte *pal, int name)
 {
 	// unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight;
 	int		i, j;
-	int		row1[256], row2[256], col1[256], col2[256];
+	int		row1[MAX_TEXTURE_DIMS], row2[MAX_TEXTURE_DIMS], col1[MAX_TEXTURE_DIMS], col2[MAX_TEXTURE_DIMS];
 	byte	*pix1, *pix2, *pix3, *pix4;
 	byte	*tex, *out;
 
@@ -48,17 +48,15 @@ void StudioModel::UploadTexture(mstudiotexture_t *ptexture, byte *data, byte *pa
 	for (outwidth = 1; outwidth < ptexture->width; outwidth <<= 1)
 		;
 
-	//outwidth >>= 1;
-	if (outwidth > 256)
-		outwidth = 256;
+	if (outwidth > MAX_TEXTURE_DIMS)
+		outwidth = MAX_TEXTURE_DIMS;
 
 	int outheight;
 	for (outheight = 1; outheight < ptexture->height; outheight <<= 1)
 		;
 
-	//outheight >>= 1;
-	if (outheight > 256)
-		outheight = 256;
+	if (outheight > MAX_TEXTURE_DIMS)
+		outheight = MAX_TEXTURE_DIMS;
 
 	tex = out = (byte *)malloc( outwidth * outheight * 4);
 	if (!out)
@@ -115,8 +113,8 @@ void StudioModel::UploadTexture(mstudiotexture_t *ptexture, byte *data, byte *pa
 	glBindTexture( GL_TEXTURE_2D, name ); //g_texnum );		
 	glTexImage2D( GL_TEXTURE_2D, 0, 3/*??*/, outwidth, outheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex );
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, bFilterTextures ? GL_LINEAR:GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// ptexture->width = outwidth;
 	// ptexture->height = outheight;
@@ -574,10 +572,10 @@ int StudioModel::SetBodygroup( int iGroup, int iValue )
 
 int StudioModel::SetSkin( int iValue )
 {
-	if (!m_pstudiohdr)
+	if (!m_ptexturehdr)
 		return 0;
 
-	if (iValue >= m_pstudiohdr->numskinfamilies)
+	if (iValue >= m_ptexturehdr->numskinfamilies)
 	{
 		return m_skinnum;
 	}

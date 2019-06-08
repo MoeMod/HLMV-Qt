@@ -35,9 +35,10 @@ InitViewerSettings (void)
 	g_viewerSettings.transparency = 1.0f;
 
 	g_viewerSettings.yaw = 65.0f;
-	g_viewerSettings.bgColor[0] = 0.25f;
-	g_viewerSettings.bgColor[1] = 0.5f;
-	g_viewerSettings.bgColor[2] = 0.5f;
+	g_viewerSettings.bgColor[0] = 0.5f; // r
+	g_viewerSettings.bgColor[1] = 0.75f; // g
+	g_viewerSettings.bgColor[2] = 0.75f; // b
+	g_viewerSettings.bgColor[3] = 1.0f; // a
 
 	g_viewerSettings.gColor[0] = 0.85f;
 	g_viewerSettings.gColor[1] = 0.85f;
@@ -55,36 +56,8 @@ InitViewerSettings (void)
 	g_viewerSettings.textureLimit = 256;
 
 	g_viewerSettings.textureScale = 1.0f;
+
+	g_viewerSettings.vieworiginmode = false;
+
 }
 
-
-
-int
-LoadViewerSettings (const char *filename)
-{
-	FILE *file = fopen (filename, "rb");
-
-	if (!file)
-		return 0;
-
-	fread (&g_viewerSettings, sizeof (ViewerSettings), 1, file);
-	fclose (file);
-
-	return 1;
-}
-
-
-
-int
-SaveViewerSettings (const char *filename)
-{
-	FILE *file = fopen (filename, "wb");
-
-	if (!file)
-		return 0;
-
-	fwrite (&g_viewerSettings, sizeof (ViewerSettings), 1, file);
-	fclose (file);
-
-	return 1;
-}
