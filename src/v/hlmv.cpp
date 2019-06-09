@@ -11,6 +11,8 @@
 #include "StudioModel.h"
 #include "ViewerSettings.h"
 
+#include "mod_decryptor.h"
+
 #include <algorithm>
 
 QtGuiApplication1::QtGuiApplication1(QWidget *parent)
@@ -112,10 +114,25 @@ void QtGuiApplication1::OpenFile(QString qfilename) noexcept(false)
 	std::string sfilename = qfilename.toStdString();
 	const char *filename = sfilename.c_str();
 	g_studioModel.FreeModel ();
-	if (!g_studioModel.LoadModel ((char *) filename))
+
+	studiohdr_t *phdr = g_studioModel.LoadModel (filename);
+	if (!phdr)
 		throw std::runtime_error("Error loading model.");
 
-	if (!g_studioModel.PostLoadModel ((char *) filename))
+	if(Mod_IsCSOEncryptedModel(phdr))
+	{
+		if(QMessageBox::question(this,
+				"CSO Model Helper",
+				"This model is CSO-format and encrypted with IceKey. \nDo you want to decrypt it?"
+				) == QMessageBox::Yes)
+		{
+			Mod_DecryptModel(filename, phdr);
+		}
+	}
+
+	g_studioModel.LoadModelTextures(phdr);
+
+	if (!g_studioModel.PostLoadModel (phdr, filename))
 		throw std::runtime_error("Error post-loading model.");
 
 
@@ -159,5 +176,5 @@ void QtGuiApplication1::centerView ()
 	g_viewerSettings.rot[0] = -90.0f;
 	g_viewerSettings.rot[1] = -90.0f;
 	g_viewerSettings.rot[2] = 0.0f;
-	ui.centralWidget->repaint ();
+	ui.centralWidget->update ();
 }

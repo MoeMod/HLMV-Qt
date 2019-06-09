@@ -94,7 +94,7 @@ void QtGuiApplication1::setTextureCurrent(int index)
 		ui.cbFullBright->setChecked ((ptexture->flags & STUDIO_NF_FULLBRIGHT) == STUDIO_NF_FULLBRIGHT);
 	}
 	initMeshList (index);
-	ui.openglwidget->repaint ();
+	ui.openglwidget->update ();
 }
 
 void QtGuiApplication1::updateTextureFlags()
@@ -190,7 +190,7 @@ void QtGuiApplication1::onImportTexture()
 
 	g_studioModel.UploadTexture (ptexture, (byte *) phdr + ptexture->index, (byte *) phdr + ptexture->index + ptexture->width * ptexture->height, g_viewerSettings.texture + 3);
 
-	ui.openglwidget->repaint ();
+	ui.openglwidget->update ();
 }
 
 void QtGuiApplication1::onExportTexture()

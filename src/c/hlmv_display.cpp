@@ -25,5 +25,5 @@ void QtGuiApplication1::updateViewSettings()
 	g_studioModel.scaleMeshes (static_cast<float>(ui.leMeshScale->value()));
 	g_studioModel.scaleBones (static_cast<float>(ui.leBoneScale->value()));
 
-	ui.openglwidget->repaint ();
+	ui.openglwidget->update ();
 }

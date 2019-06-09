@@ -41,7 +41,7 @@ void MyOpenGLWidget::idleEvent()
 	pimpl->m_gldraw.Think();
 
 	if (!g_viewerSettings.pause)
-		this->repaint ();
+		this->updateGL ();
 }
 
 void MyOpenGLWidget::initializeGL()

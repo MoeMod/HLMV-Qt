@@ -31,11 +31,14 @@ public:
 	studiohdr_t				*getTextureHeader () const { return m_ptexturehdr; }
 	studiohdr_t				*getAnimHeader (int i) const { return m_panimhdr[i]; }
 
-	void					UploadTexture( mstudiotexture_t *ptexture, byte *data, byte *pal, int name );
+	void					UploadTexture( const mstudiotexture_t *ptexture, const byte *data, const byte *pal, int name );
 	void					FreeModel ();
-	studiohdr_t				*LoadModel( char *modelname );
-	bool					PostLoadModel ( char *modelname );
-	bool					SaveModel ( char *modelname );
+
+	studiohdr_t				*LoadModel( const char *modelname );
+	void                    LoadModelTextures( const studiohdr_t *phdr );
+	bool					PostLoadModel ( studiohdr_t *phdr, const char *modelname );
+
+	bool					SaveModel ( const char *modelname );
 	void					DrawModel( void );
 	void					AdvanceFrame( float dt );
 	int						SetFrame (int nFrame);

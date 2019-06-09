@@ -17,7 +17,7 @@
 #include <gl.h>
 //#include <GL/glu.h>
 #include "StudioModel.h"
-
+#include "mod_decryptor.h"
 
 
 #pragma warning( disable : 4244 ) // double to float
@@ -35,12 +35,12 @@ static int g_texnum = 3;
 //with this define, MAX_TEXTURE_DIMS
 #define MAX_TEXTURE_DIMS 512	
 
-void StudioModel::UploadTexture(mstudiotexture_t *ptexture, byte *data, byte *pal, int name)
+void StudioModel::UploadTexture(const mstudiotexture_t *ptexture, const byte *data, const byte *pal, int name)
 {
 	// unsigned *in, int inwidth, int inheight, unsigned *out,  int outwidth, int outheight;
 	int		i, j;
 	int		row1[MAX_TEXTURE_DIMS], row2[MAX_TEXTURE_DIMS], col1[MAX_TEXTURE_DIMS], col2[MAX_TEXTURE_DIMS];
-	byte	*pix1, *pix2, *pix3, *pix4;
+	const byte *pix1, *pix2, *pix3, *pix4;
 	byte	*tex, *out;
 
 	// convert texture to power of 2
@@ -160,7 +160,7 @@ StudioModel::FreeModel ()
 
 
 
-studiohdr_t *StudioModel::LoadModel( char *modelname )
+studiohdr_t *StudioModel::LoadModel( const char *modelname )
 {
 	FILE *fp;
 	long size;
@@ -187,26 +187,27 @@ studiohdr_t *StudioModel::LoadModel( char *modelname )
 	fread( buffer, size, 1, fp );
 	fclose( fp );
 
-	byte				*pin;
-	studiohdr_t			*phdr;
-	mstudiotexture_t	*ptexture;
-
-	pin = (byte *)buffer;
-	phdr = (studiohdr_t *)pin;
-	ptexture = (mstudiotexture_t *)(pin + phdr->textureindex);
 
 	if (strncmp ((const char *) buffer, "IDST", 4) &&
 		strncmp ((const char *) buffer, "IDSQ", 4))
 	{
 		free (buffer);
-		return 0;
+		return nullptr;
 	}
 
 	if (!strncmp ((const char *) buffer, "IDSQ", 4) && !m_pstudiohdr)
 	{
 		free (buffer);
-		return 0;
+		return nullptr;
 	}
+
+	return (studiohdr_t *)buffer;
+}
+
+void StudioModel::LoadModelTextures( const studiohdr_t *phdr )
+{
+	const byte *pin = reinterpret_cast<const byte *>(phdr);
+	const mstudiotexture_t *ptexture = reinterpret_cast<const mstudiotexture_t *>(pin + phdr->textureindex);
 
 	if (phdr->textureindex > 0 && phdr->numtextures <= MAXSTUDIOSKINS)
 	{
@@ -220,43 +221,39 @@ studiohdr_t *StudioModel::LoadModel( char *modelname )
 	}
 
 	// UNDONE: free texture memory
-
-	if (!m_pstudiohdr)
-		m_pstudiohdr = (studiohdr_t *)buffer;
-
-	return (studiohdr_t *)buffer;
 }
 
-
-
-bool StudioModel::PostLoadModel( char *modelname )
+bool StudioModel::PostLoadModel( studiohdr_t *phdr, const char *modelname )
 {
+	studiohdr_t *ptexturehdr = nullptr;
+	bool owntexmodel = false;
+
 	// preload textures
-	if (m_pstudiohdr->numtextures == 0)
+	if (phdr->numtextures == 0)
 	{
 		char texturename[256];
 
 		strcpy( texturename, modelname );
 		strcpy( &texturename[strlen(texturename) - 4], "T.mdl" );
 
-		m_ptexturehdr = LoadModel( texturename );
-		if (!m_ptexturehdr)
+		ptexturehdr = LoadModel( texturename );
+		if (!ptexturehdr)
 		{
 			FreeModel ();
 			return false;
 		}
-		m_owntexmodel = true;
+		owntexmodel = true;
 	}
 	else
 	{
-		m_ptexturehdr = m_pstudiohdr;
-		m_owntexmodel = false;
+		ptexturehdr = phdr;
+		owntexmodel = false;
 	}
 
 	// preload animations
-	if (m_pstudiohdr->numseqgroups > 1)
+	if (phdr->numseqgroups > 1)
 	{
-		for (int i = 1; i < m_pstudiohdr->numseqgroups; i++)
+		for (int i = 1; i < phdr->numseqgroups; i++)
 		{
 			char seqgroupname[256];
 
@@ -272,6 +269,10 @@ bool StudioModel::PostLoadModel( char *modelname )
 		}
 	}
 
+	m_pstudiohdr = phdr;
+	m_ptexturehdr = ptexturehdr;
+	m_owntexmodel = owntexmodel;
+
 	SetSequence (0);
 	SetController (0, 0.0f);
 	SetController (1, 0.0f);
@@ -280,7 +281,7 @@ bool StudioModel::PostLoadModel( char *modelname )
 	SetMouth (0.0f);
 
 	int n;
-	for (n = 0; n < m_pstudiohdr->numbodyparts; n++)
+	for (n = 0; n < phdr->numbodyparts; n++)
 		SetBodygroup (n, 0);
 
 	SetSkin (0);
@@ -290,12 +291,13 @@ bool StudioModel::PostLoadModel( char *modelname )
 	if (mins[2] < 5.0f)
 		m_origin[2] = -mins[2];
 */
+
 	return true;
 }
 
 
 
-bool StudioModel::SaveModel ( char *modelname )
+bool StudioModel::SaveModel ( const char *modelname )
 {
 	if (!modelname)
 		return false;

@@ -55,12 +55,15 @@ file(GLOB FILE_SRC
 		src/c/hlmv_body.cpp
 		src/c/hlmv_display.cpp
 		src/c/hlmv_origin.cpp
+		src/c/hlmv_cso_model.cpp
 
 		src/m/mathlib.c
 		src/m/studio_render.cpp
 		src/m/studio_utils.cpp
 		src/m/ViewerSettings.cpp
 		src/m/gl_draw.cpp
+		src/m/mod_decryptor.cpp
+		src/m/IceKey.cpp
 		)
 
 if(APPLE)
