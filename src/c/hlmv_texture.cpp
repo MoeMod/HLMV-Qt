@@ -156,7 +156,7 @@ void QtGuiApplication1::setTextureScale(int texScale)
 
 void QtGuiApplication1::onImportTexture()
 {
-	const QString filename = QFileDialog::getOpenFileName(this, {}, {}, "Image file(*.jpg;*.bmp;*.png;*.tiff);;JPG file (*.jpg);;BMP file (*.bmp);;PNG file (*.png);;TIFF file (*.tiff)");
+	const QString filename = QFileDialog::getOpenFileName(this, {}, {}, "Image file(*.bmp;*.jpg;*.png;*.tiff);;BMP file (*.bmp);;JPG file (*.jpg);;PNG file (*.png);;TIFF file (*.tiff)");
 
 	if(filename.isEmpty())
 		return;
@@ -195,16 +195,16 @@ void QtGuiApplication1::onImportTexture()
 
 void QtGuiApplication1::onExportTexture()
 {
-	QString filename = QFileDialog::getSaveFileName(this, {}, {}, "JPG file (*.jpg);;BMP file (*.bmp);;PNG file (*.png);;TIFF file (*.tiff)");
-
-	if(filename.isEmpty())
-		return;
-
 	studiohdr_t *phdr = g_studioModel.getTextureHeader ();
 	if (!phdr)
 		return QMessageBox::critical(this, "Error", "studiohdr_t *phdr not available"), void();
 
 	mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) phdr + phdr->textureindex) + g_viewerSettings.texture;
+
+	QString filename = QFileDialog::getSaveFileName(this, {}, ptexture->name, "BMP file (*.bmp);;JPG file (*.jpg);;PNG file (*.png);;TIFF file (*.tiff)");
+
+	if(filename.isEmpty())
+		return;
 
 	QImage qi(  ((byte *) phdr + ptexture->index),
 	            ptexture->width,

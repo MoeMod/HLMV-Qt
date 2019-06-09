@@ -52,6 +52,8 @@ protected:
 
 public:
 	void OpenFile(QString str) noexcept(false);
+	void SaveFile(QString str) noexcept(false);
+	void CloseFile();
 	void initSequences ();
 	void setSequenceInfo ();
 	void setEvent (int seq);

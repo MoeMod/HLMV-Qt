@@ -55,6 +55,7 @@ file(GLOB FILE_SRC
 		src/c/hlmv_display.cpp
 		src/c/hlmv_origin.cpp
 		src/c/hlmv_cso_model.cpp
+		src/c/hlmv_file.cpp
 
 		src/m/mathlib.c
 		src/m/studio_render.cpp
