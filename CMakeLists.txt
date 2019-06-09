@@ -22,13 +22,11 @@ if(APPLE)
 	add_definitions(-DGL_SILENCE_DEPRECATION)
 endif()
 
-include_directories(mxtk/include)
-include_directories(mxtk/include/mx)
 include_directories(src)
 include_directories(src/v)
 include_directories(src/m)
 include_directories(src/c)
-include_directories(GL)
+
 
 file(GLOB FILE_RES
 		srv/v/hlmv.qrc
