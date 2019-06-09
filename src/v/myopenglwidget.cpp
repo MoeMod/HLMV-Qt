@@ -1,5 +1,3 @@
-#include "myopenglwidget.h"
-
 #include <QEvent>
 #include <QApplication>
 #include <QClipboard>
@@ -13,6 +11,7 @@
 #include "ViewerSettings.h"
 
 #include "gl_draw.h"
+#include "myopenglwidget.h"
 
 struct MyOpenGLWidget::impl_t
 {
@@ -31,10 +30,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
 	pimpl->m_Timer.start ();
 }
 
-MyOpenGLWidget::~MyOpenGLWidget()
-{
-	// unique_ptr的析构函数需要impl_t的完整定义，所以这个空析构函数要留下来。
-}
+MyOpenGLWidget::~MyOpenGLWidget() = default;
 
 void MyOpenGLWidget::idleEvent()
 {

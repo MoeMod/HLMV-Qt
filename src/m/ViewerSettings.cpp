@@ -33,6 +33,7 @@ InitViewerSettings (void)
 	g_viewerSettings.trans[2] = 50.0f;
 	g_viewerSettings.renderMode = RM_TEXTURED;
 	g_viewerSettings.transparency = 1.0f;
+	g_viewerSettings.use3dfx = true;
 
 	g_viewerSettings.yaw = 65.0f;
 	g_viewerSettings.bgColor[0] = 0.5f; // r

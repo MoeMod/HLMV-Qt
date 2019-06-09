@@ -178,3 +178,4 @@ void QtGuiApplication1::centerView ()
 	g_viewerSettings.rot[2] = 0.0f;
 	ui.centralWidget->update ();
 }
+
