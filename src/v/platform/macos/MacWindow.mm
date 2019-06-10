@@ -28,6 +28,11 @@
 	exit(0);
 	return YES;
 }
+- (void)windowDidResize:(NSNotification *)notification {
+	NSWindow *nsw = notification.object;
+	nsw.styleMask |=  NSWindowStyleMaskUnifiedTitleAndToolbar;
+	nsw.styleMask |=  NSWindowStyleMaskFullSizeContentView;
+}
 @end
 
 void QtGuiApplication1::SetupMacWindow()
@@ -42,7 +47,7 @@ void QtGuiApplication1::SetupMacWindow()
 	nsw.delegate = mwd;
 
 	nsw.styleMask |=  NSWindowStyleMaskUnifiedTitleAndToolbar;
-	//nsw.styleMask |=  NSWindowStyleMaskFullSizeContentView;
+	nsw.styleMask |=  NSWindowStyleMaskFullSizeContentView;
 	//nsw.titleVisibility = NSWindowTitleHidden;
 	nsw.titlebarAppearsTransparent = TRUE;
 
@@ -92,32 +97,7 @@ void QtGuiApplication1::SetupMacWindow()
 	}
 	toolBar->addSeparator();
 	toolBar->addStandardItem(QMacToolBarItem::FlexibleSpace);
-
-	if(0)
-	{
-
-
-		QMacToolBarItem *item = toolBar->addItem(this->windowIcon(), QString("About"));
-		item->setSelectable(false);
-		connect(
-				item,
-				&QMacToolBarItem::activated,
-				[=](){ OnActionAbout(); }
-		);
-
-		NSToolbarItem *nativeItem = item->nativeToolBarItem();
-
-		/*
-		NSSearchField *search = [[NSSearchField alloc] init];
-
-		[nativeItem setView:search];
-		[nativeItem setMaxSize:{30.0, 0.0}];
-		 */
-	}
-	else
-	{
-		toolBar->addStandardItem(QMacToolBarItem::Space);
-	}
+	toolBar->addStandardItem(QMacToolBarItem::Space);
 
 
 	toolBar->attachToWindow(this->window()->windowHandle());
@@ -145,11 +125,6 @@ void QtGuiApplication1::SetupMacWindow()
 	NSLayoutConstraint *topContraint3 = [NSLayoutConstraint constraintWithItem:zoomBtn attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:zoomBtn.superview attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0];
 	leftContraint3.active = YES;
 	topContraint3.active = YES;
-
-	NSView *titleView = closeBtn.superview;
-	NSView *titleBackgroundView = titleView.superview; // NSTitlebarContainerView
-	//titleBackgroundView.layer.backgroundColor = CGColorCreateGenericGray(0.36, 1.0);
-	titleBackgroundView.layer.backgroundColor = CGColorCreateGenericRGB(g_viewerSettings.bgColor[0], g_viewerSettings.bgColor[1], g_viewerSettings.bgColor[2], g_viewerSettings.bgColor[3]);
 
 }
 
