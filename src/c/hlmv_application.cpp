@@ -1,9 +1,13 @@
 #include "hlmv_application.h"
+#include "ViewerSettings.h"
 
 #include <QFileOpenEvent>
 
 HLMVApplication::HLMVApplication(int &argc, char **argv) : QApplication(argc, argv)
 {
+	InitViewerSettings();
+
+	setAttribute(Qt::AA_EnableHighDpiScaling, true);
 	w.show();
 	if(argc >= 2)
 	{

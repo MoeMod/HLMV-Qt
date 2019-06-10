@@ -2,10 +2,14 @@
 
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QScreen>
 
 QtGuiApplication1::QtGuiApplication1(QWidget *parent)
 	: QMainWindow(parent)
 {
+	this->setMinimumWidth(QApplication::primaryScreen()->availableVirtualSize().width() / 2);
+	this->setMinimumHeight(width() / 3 * 2);
+
 	ui.setupUi(this);
 
 	connect(ui.actionOpen, &QAction::triggered, this, &QtGuiApplication1::OnActionOpen);

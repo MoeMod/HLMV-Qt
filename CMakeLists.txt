@@ -42,10 +42,11 @@ file(GLOB FILE_MOC
 		)
 
 file(GLOB FILE_SRC
+		src/main.cpp
+
 		src/v/hlmv.cpp
 		src/v/myopenglwidget.cpp
 
-		src/c/main.cpp
 		src/c/hlmv_application.cpp
 		src/c/hlmv_tab.cpp
 		src/c/hlmv_seq.cpp
@@ -107,6 +108,9 @@ if(APPLE)
 
 	set(CMAKE_INSTALL_PREFIX "/Applications")
 	install(TARGETS HLMV BUNDLE DESTINATION ".")
+elseif(WIN32)
+	add_executable(HLMV WIN32 ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
+	target_link_libraries(HLMV ${OPENGL_LIBRARY} Qt5::Core Qt5::Widgets Qt5::OpenGL)
 else()
 	add_executable(HLMV ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
 	target_link_libraries(HLMV ${OPENGL_LIBRARY} Qt5::Core Qt5::Widgets Qt5::OpenGL)
