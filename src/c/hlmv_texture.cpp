@@ -1,6 +1,8 @@
 #include "hlmv.h"
 #include "ViewerSettings.h"
 #include "StudioModel.h"
+#include "qt_image.h"
+
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -34,7 +36,7 @@ void QtGuiApplication1::setMesh (int index)
 	if (index >= 0)
 	{
 		g_viewerSettings.showAllMeshes = true;
-		if (g_viewerSettings.meshCount <= 1 || g_viewerSettings.meshCount >= index + 1)
+		if (g_viewerSettings.meshCount >= 1 && index < g_viewerSettings.meshCount)
 			g_viewerSettings.showAllMeshes = false;
 		g_viewerSettings.mesh = index;
 	}
@@ -69,12 +71,12 @@ void QtGuiApplication1::initMeshList (int index)
 		}
 	}
 
-	if (1 < k)
-		ui.cMesh->addItem ("All");
+	ui.cMesh->addItem ("All");
 
-	ui.cMesh->setCurrentIndex (0);
 	g_viewerSettings.mesh = 0;
 	g_viewerSettings.meshCount = k;
+	ui.cMesh->setCurrentIndex (k);
+	setMesh(k);
 }
 
 void QtGuiApplication1::setTextureCurrent(int index)
@@ -156,75 +158,84 @@ void QtGuiApplication1::setTextureScale(int texScale)
 
 void QtGuiApplication1::onImportTexture()
 {
-	const QString filename = QFileDialog::getOpenFileName(this, {}, {}, "Image file(*.bmp;*.jpg;*.png;*.tiff);;BMP file (*.bmp);;JPG file (*.jpg);;PNG file (*.png);;TIFF file (*.tiff)");
-
-	if(filename.isEmpty())
-		return;
-
-	const QImage qiOriginal(filename);
-	if(qiOriginal.isNull())
-		return QMessageBox::critical(this, "Error", "Image not available"), void();
-
-	studiohdr_t *phdr = g_studioModel.getTextureHeader ();
-	if (!phdr)
-		return QMessageBox::critical(this, "Error", "studiohdr_t *phdr not available"), void();
-
-	mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) phdr + phdr->textureindex) + g_viewerSettings.texture;
-
-	const QImage qi = qiOriginal.scaled(ptexture->width, ptexture->height).convertToFormat(QImage::Format::Format_Indexed8);
-	if(qi.isNull())
-		return QMessageBox::critical(this, "Error", "Can not transform texture"), void();
-
-	std::copy_n (qi.bits(), ptexture->width * ptexture->height, ((byte *) phdr + ptexture->index));
-
-	// RGB_RGB_RGB_ => RGBRGB
-	QVector<QRgb> qv = qi.colorTable();
-	for(std::size_t i = 0; i< 256; ++i)
+	try
 	{
-		byte *p = (byte *) phdr + ptexture->index + ptexture->width * ptexture->height + 3 * i;
-		QColor color = qv[i];
-		p[0] = static_cast<byte>(color.red());
-		p[1] = static_cast<byte>(color.green());
-		p[2] = static_cast<byte>(color.blue());
+		const QString filename = getOpenFileImagePath(this);
+		if(filename.isEmpty())
+			return;
+
+		const QImage qiOriginal = getOpenImage(filename); // may throw
+
+		studiohdr_t *phdr = g_studioModel.getTextureHeader ();
+		if (!phdr)
+			throw std::runtime_error("studiohdr_t *phdr not available");
+
+		mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) phdr + phdr->textureindex) + g_viewerSettings.texture;
+
+		const QImage qi = qiOriginal.scaled(ptexture->width, ptexture->height).convertToFormat(QImage::Format::Format_Indexed8);
+		if(qi.isNull())
+			throw std::runtime_error("Can not transform texture");
+
+		std::copy_n (qi.bits(), ptexture->width * ptexture->height, ((byte *) phdr + ptexture->index));
+
+		// RGB_RGB_RGB_ => RGBRGB
+		QVector<QRgb> qv = qi.colorTable();
+		for(std::size_t i = 0; i< 256; ++i)
+		{
+			byte *p = (byte *) phdr + ptexture->index + ptexture->width * ptexture->height + 3 * i;
+			QColor color = qv[i];
+			p[0] = static_cast<byte>(color.red());
+			p[1] = static_cast<byte>(color.green());
+			p[2] = static_cast<byte>(color.blue());
+		}
+
+		g_studioModel.UploadTexture (ptexture, (byte *) phdr + ptexture->index, (byte *) phdr + ptexture->index + ptexture->width * ptexture->height, g_viewerSettings.texture + 3);
+
+		ui.openglwidget->update ();
 	}
-
-	g_studioModel.UploadTexture (ptexture, (byte *) phdr + ptexture->index, (byte *) phdr + ptexture->index + ptexture->width * ptexture->height, g_viewerSettings.texture + 3);
-
-	ui.openglwidget->update ();
+	catch(const std::exception &e)
+	{
+		return QMessageBox::critical(this, "Error", e.what()), void();
+	}
 }
 
 void QtGuiApplication1::onExportTexture()
 {
-	studiohdr_t *phdr = g_studioModel.getTextureHeader ();
-	if (!phdr)
-		return QMessageBox::critical(this, "Error", "studiohdr_t *phdr not available"), void();
-
-	mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) phdr + phdr->textureindex) + g_viewerSettings.texture;
-
-	QString filename = QFileDialog::getSaveFileName(this, {}, ptexture->name, "BMP file (*.bmp);;JPG file (*.jpg);;PNG file (*.png);;TIFF file (*.tiff)");
-
-	if(filename.isEmpty())
-		return;
-
-	QImage qi(  ((byte *) phdr + ptexture->index),
-	            ptexture->width,
-				ptexture->height,
-				QImage::Format::Format_Indexed8
-				);
-
-	// RGBRGB => RGB_RGB_RGB_
+	try
 	{
-		QVector<QRgb> qv(256);
-		for(std::size_t i = 0; i< 256; ++i)
+		studiohdr_t *phdr = g_studioModel.getTextureHeader ();
+		phdr ? void() : throw std::runtime_error("studiohdr_t *phdr not available");
+
+		mstudiotexture_t *ptexture = (mstudiotexture_t *) ((byte *) phdr + phdr->textureindex) + g_viewerSettings.texture;
+		ptexture ? void() : throw std::runtime_error("mstudiotexture_t *ptexture not available");
+
+		QString filename = getSaveFileImagePath(this, {}, ptexture->name);
+		if(filename.isEmpty())
+			return;
+
+		QImage qi(  ((byte *) phdr + ptexture->index),
+		            ptexture->width,
+		            ptexture->height,
+		            QImage::Format::Format_Indexed8
+		);
+		qi.isNull() ? void() : throw std::runtime_error("cannot convert to QImage");
+
+		// RGBRGB => RGB_RGB_RGB_
 		{
-			const byte *p = (byte *) phdr + ptexture->index + ptexture->width * ptexture->height + 3 * i;
-			QRgb rgb = QColor(p[0], p[1], p[2]).rgb();
-			qv[i] = rgb;
+			QVector<QRgb> qv(256);
+			for(std::size_t i = 0; i< 256; ++i)
+			{
+				const byte *p = (byte *) phdr + ptexture->index + ptexture->width * ptexture->height + 3 * i;
+				QRgb rgb = QColor(p[0], p[1], p[2]).rgb();
+				qv[i] = rgb;
+			}
+			qi.setColorTable(std::move(qv));
 		}
-		qi.setColorTable(std::move(qv));
+
+		saveImageTo(qi, filename);
 	}
-
-	if(!qi.save(filename))
-		return QMessageBox::critical(this, "Error", "Error writing texture."), void();
-
+	catch (const std::exception & e)
+	{
+		return QMessageBox::critical(this, "Error", e.what()), void();
+	}
 }

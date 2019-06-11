@@ -13,6 +13,8 @@
 #include "gl_draw.h"
 #include "myopenglwidget.h"
 
+#include "qt_image.h"
+
 struct MyOpenGLWidget::impl_t
 {
 	explicit impl_t(MyOpenGLWidget *p) : m_Timer(p) {}
@@ -129,10 +131,17 @@ void MyOpenGLWidget::onActionSnapshot()
 			) == QMessageBox::Save)
 	{
 
-		QString filename = QFileDialog::getSaveFileName(this, {}, {}, "JPG file (*.jpg);;BMP file (*.bmp);;PNG file (*.png);;TIFF file (*.tiff)");
+		QString filename = getSaveFileImagePath(this, {}, {});
 
 		if(!filename.isEmpty())
-			qi.save(filename);
+			try
+			{
+				saveImageTo(qi, filename);
+			}
+			catch(const std::exception &e)
+			{
+				QMessageBox::critical(this, "Error", e.what()), void();
+			}
 
 	}
 }

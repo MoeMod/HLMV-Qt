@@ -32,10 +32,13 @@ public:
 	studiohdr_t				*getAnimHeader (int i) const { return m_panimhdr[i]; }
 
 	void					UploadTexture( const mstudiotexture_t *ptexture, const byte *data, const byte *pal, int name );
+	bool					UploadTextureTGA( mstudiotexture_t *ptexture, const char *path, int name );
+	bool					UploadTextureBMP( mstudiotexture_t *ptexture, const char *path, int name );
 	void					FreeModel ();
 
 	studiohdr_t				*LoadModel( const char *modelname );
 	void                    LoadModelTextures( const studiohdr_t *phdr );
+	void                    LoadModelTexturesCSO( studiohdr_t *phdr, const char *texturePath );
 	bool					PostLoadModel ( studiohdr_t *phdr, const char *modelname );
 
 	bool					SaveModel ( const char *modelname );
@@ -57,6 +60,8 @@ public:
 
 	void					scaleMeshes (float scale);
 	void					scaleBones (float scale);
+
+	static bool             hasCSOTexture(const studiohdr_t *phdr);
 
 private:
 	// entity settings
@@ -96,6 +101,8 @@ private:
 	void					SetupLighting( void );
 
 	void					SetupModel ( int bodypart );
+
+	static bool             isCSOExternalTexture(const mstudiotexture_t &ptexture);
 };
 
 

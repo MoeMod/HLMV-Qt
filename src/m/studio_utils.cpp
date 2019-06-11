@@ -18,6 +18,9 @@
 //#include <GL/glu.h>
 #include "StudioModel.h"
 #include "mod_decryptor.h"
+#include <algorithm>
+#include "TGAlib.h"
+#include "bmpread.h"
 
 
 #pragma warning( disable : 4244 ) // double to float
@@ -204,7 +207,7 @@ studiohdr_t *StudioModel::LoadModel( const char *modelname )
 	return (studiohdr_t *)buffer;
 }
 
-void StudioModel::LoadModelTextures( const studiohdr_t *phdr )
+void StudioModel::LoadModelTextures( const studiohdr_t *phdr)
 {
 	const byte *pin = reinterpret_cast<const byte *>(phdr);
 	const mstudiotexture_t *ptexture = reinterpret_cast<const mstudiotexture_t *>(pin + phdr->textureindex);
@@ -217,6 +220,45 @@ void StudioModel::LoadModelTextures( const studiohdr_t *phdr )
 			// strcpy( name, mod->name );
 			// strcpy( name, ptexture[i].name );
 			UploadTexture( &ptexture[i], pin + ptexture[i].index, pin + ptexture[i].width * ptexture[i].height + ptexture[i].index, g_texnum++ );
+		}
+	}
+
+	// UNDONE: free texture memory
+}
+
+void StudioModel::LoadModelTexturesCSO( studiohdr_t *phdr, const char *texturePath)
+{
+	byte *pin = reinterpret_cast<byte *>(phdr);
+	mstudiotexture_t *ptexture = reinterpret_cast<mstudiotexture_t *>(pin + phdr->textureindex);
+
+	if (phdr->textureindex > 0 && phdr->numtextures <= MAXSTUDIOSKINS)
+	{
+		int n = phdr->numtextures;
+		for (int i = 0; i < n; i++)
+		{
+			// strcpy( name, mod->name );
+			// strcpy( name, ptexture[i].name );
+			if(isCSOExternalTexture(ptexture[i]))
+			{
+				std::string path = texturePath;
+				path.push_back('/');
+				path += (ptexture[i].name);
+
+				if(UploadTextureTGA(&ptexture[i], path.c_str(), g_texnum) || UploadTextureBMP(&ptexture[i], path.c_str(), g_texnum))
+				{
+					// ...
+				}
+				else
+				{
+					UploadTexture( &ptexture[i], pin + ptexture[i].index, pin + ptexture[i].width * ptexture[i].height + ptexture[i].index, g_texnum );
+				}
+				++g_texnum;
+			}
+			else
+			{
+				UploadTexture( &ptexture[i], pin + ptexture[i].index, pin + ptexture[i].width * ptexture[i].height + ptexture[i].index, g_texnum++ );
+			}
+
 		}
 	}
 
@@ -652,3 +694,74 @@ void StudioModel::scaleBones (float scale)
 	}	
 }
 
+bool StudioModel::hasCSOTexture(const studiohdr_t *phdr)
+{
+	const byte *pin = reinterpret_cast<const byte *>(phdr);
+	const mstudiotexture_t *ptextures = reinterpret_cast<const mstudiotexture_t *>(pin + phdr->textureindex);
+
+	if (phdr->textureindex > 0 && phdr->numtextures <= MAXSTUDIOSKINS)
+	{
+		int n = phdr->numtextures;
+		return std::any_of(ptextures, ptextures + n, isCSOExternalTexture);
+	}
+
+	return false;
+}
+bool StudioModel::isCSOExternalTexture(const mstudiotexture_t &texture)
+{
+	if(texture.width == 4 && texture.height == 1)
+		return true;
+	if(texture.name[0] == '#' || texture.name[0] == '$')
+		return true;
+
+	return false;
+}
+
+bool StudioModel::UploadTextureTGA(mstudiotexture_t *ptexture, const char *path, int name)
+{
+	tImageTGA *tga = tgaLoad(path);
+	if(tga->status != TGA_OK)
+		return false;
+	std::unique_ptr<tImageTGA, decltype(&tgaDestroy)> ptga(tga, tgaDestroy);
+
+	glBindTexture( GL_TEXTURE_2D, name ); //g_texnum );
+	if(tga->pixelDepth == 32)
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, tga->width, tga->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tga->imageData );
+	else
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB5_A1, tga->width, tga->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tga->imageData );
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	ptexture->width = tga->width;
+	ptexture->height = tga->height;
+
+	return true;
+}
+
+bool StudioModel::UploadTextureBMP(mstudiotexture_t *ptexture, const char *path, int name)
+{
+	bmpread_t bitmap;
+	if(!bmpread(path, BMPREAD_TOP_DOWN, &bitmap))
+	{
+		return false;
+	}
+	std::unique_ptr<bmpread_t, decltype(&bmpread_free)> pbmp(&bitmap, bmpread_free);
+
+	/* At this point, bitmap.width and .height hold the pixel dimensions of the
+	 * file, and bitmap.data holds the raw pixel data in RGB triplets.
+	 */
+
+	glBindTexture(GL_TEXTURE_2D, name);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, bitmap.width, bitmap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bitmap.data);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	ptexture->width = bitmap.width;
+	ptexture->height = bitmap.height;
+
+	return true;
+}

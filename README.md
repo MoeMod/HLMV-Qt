@@ -3,11 +3,12 @@ Half-Life Model Viewer remixed with Qt5.
 Optimized for macOS.
 
 # Features
+- [x] Customized UI on macOS
 - [x] what the original HLMV does
 - [x] Import & Export with BMP/JPG/TIFF/PNG formats (with Qt)
 - [x] Screenshot to clipboard and/or image file
 - [x] CSO encrypted model loading
-- [x] Customized UI on macOS
+- [x] CSO external textures loading
 
 # Installation
 ## macOS

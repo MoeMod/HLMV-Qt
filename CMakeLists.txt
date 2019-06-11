@@ -57,6 +57,7 @@ file(GLOB FILE_SRC
 		src/c/hlmv_origin.cpp
 		src/c/hlmv_cso_model.cpp
 		src/c/hlmv_file.cpp
+		src/c/qt_image.cpp
 
 		src/m/mathlib.c
 		src/m/studio_render.cpp
@@ -65,6 +66,8 @@ file(GLOB FILE_SRC
 		src/m/gl_draw.cpp
 		src/m/mod_decryptor.cpp
 		src/m/IceKey.cpp
+		src/m/TGAlib.cpp
+		src/m/bmpread.cpp
 		)
 
 if(APPLE)

@@ -8,6 +8,7 @@
 #include <QMimeData>
 #include <QFile>
 #include <QMessageBox>
+#include <QDir>
 #include <QFileInfo>
 
 #include <algorithm>
@@ -52,6 +53,7 @@ void QtGuiApplication1::OpenFile(QString qfilename) noexcept(false)
 	if (!phdr)
 		throw std::runtime_error("Error loading model.");
 
+	bool bCSOTexture = false;
 	if(Mod_IsCSOEncryptedModel(phdr))
 	{
 		if(QMessageBox::question(this,
@@ -60,13 +62,29 @@ void QtGuiApplication1::OpenFile(QString qfilename) noexcept(false)
 		) == QMessageBox::Yes)
 		{
 			Mod_DecryptModel(filename, phdr);
+			bCSOTexture = true;
 		}
 	}
 
-	g_studioModel.LoadModelTextures(phdr);
+	if(!bCSOTexture && g_studioModel.hasCSOTexture(phdr))
+	{
+		if(QMessageBox::question(this,
+		                         "CSO Model Helper",
+		                         "This model is CSO-format and has external textures. \nDo you want to load them?"
+		) == QMessageBox::Yes)
+		{
+			bCSOTexture = true;
+		}
+	}
+
 
 	if (!g_studioModel.PostLoadModel (phdr, filename))
 		throw std::runtime_error("Error post-loading model.");
+
+	if(bCSOTexture)
+		g_studioModel.LoadModelTexturesCSO(phdr, (QFileInfo(qfilename).path() + "/texture").toStdString().c_str());
+	else
+		g_studioModel.LoadModelTextures(phdr);
 
 
 	initSequences ();
