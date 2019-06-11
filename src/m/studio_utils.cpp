@@ -247,6 +247,9 @@ void StudioModel::LoadModelTexturesCSO( studiohdr_t *phdr, const char *texturePa
 				if(UploadTextureTGA(&ptexture[i], path.c_str(), g_texnum) || UploadTextureBMP(&ptexture[i], path.c_str(), g_texnum))
 				{
 					// ...
+					char buffer[64] = "*CSO*";
+					strcat(buffer, ptexture[i].name);
+					strcpy(ptexture[i].name, buffer);
 				}
 				else
 				{
@@ -353,7 +356,43 @@ bool StudioModel::SaveModel ( const char *modelname )
 	if (!file)
 		return false;
 
-	fwrite (m_pstudiohdr, sizeof (byte), m_pstudiohdr->length, file);
+	std::vector<byte> data_to_save(reinterpret_cast<byte *>(m_pstudiohdr), reinterpret_cast<byte *>(m_pstudiohdr) + m_pstudiohdr->length);
+
+	{
+		studiohdr_t *phdr = reinterpret_cast<studiohdr_t *>(data_to_save.data());
+		mstudiotexture_t *ptexture = reinterpret_cast<mstudiotexture_t *>(data_to_save.data() + phdr->textureindex);
+
+		if (phdr->textureindex > 0 && phdr->numtextures <= MAXSTUDIOSKINS) {
+			int n = phdr->numtextures;
+			for (int i = 0; i < n; i++) {
+				if(strncmp(ptexture[i].name, "*CSO*", 4) != 0)
+					continue;
+				// TODO : convert and save external texture
+#if 0
+				auto old_size =  data_to_save.size();
+				{
+					data_to_save.resize(old_size + ptexture[i].width * ptexture[i].height * 3 + 256);
+					// due to vector resize, pointers may be expired
+					phdr = reinterpret_cast<studiohdr_t *>(data_to_save.data());
+					ptexture = reinterpret_cast<mstudiotexture_t *>(data_to_save.data() + phdr->textureindex);
+				}
+
+				//glGetTexImage(GL_TEXTURE_2D, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data_to_save.data() + old_size);
+				ptexture[i].index = old_size;
+#endif
+
+				{
+					char szName[64];
+					strcpy(szName, ptexture[i].name + 5);
+					strcpy(ptexture[i].name, szName);
+					ptexture[i].width = 4;
+					ptexture[i].height = 1;
+				}
+			}
+		}
+	}
+
+	fwrite (data_to_save.data(), sizeof (byte), data_to_save.size(), file);
 	fclose (file);
 
 	// write texture model
@@ -709,12 +748,7 @@ bool StudioModel::hasCSOTexture(const studiohdr_t *phdr)
 }
 bool StudioModel::isCSOExternalTexture(const mstudiotexture_t &texture)
 {
-	if(texture.width == 4 && texture.height == 1)
-		return true;
-	if(texture.name[0] == '#' || texture.name[0] == '$')
-		return true;
-
-	return false;
+	return texture.width == 4 && texture.height == 1 && (texture.name[0] == '#' || texture.name[0] == '$');
 }
 
 bool StudioModel::UploadTextureTGA(mstudiotexture_t *ptexture, const char *path, int name)
