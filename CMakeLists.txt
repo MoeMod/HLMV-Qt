@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(HLMV)
+project(HLMV VERSION 1.5.2)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -71,7 +71,11 @@ file(GLOB FILE_SRC
 		)
 
 if(APPLE)
-	file(GLOB FILE_SRC_MACOS src/v/platform/macos/MacWindow.mm)
+	set(FILE_SRC_PLATFORM src/v/platform/macos/MacWindow.mm)
+endif()
+
+if(WIN32)
+	set(FILE_SRC_PLATFORM src/v/platform/win32/AeroWindow.cpp)
 endif()
 
 # Moc settings
@@ -84,7 +88,7 @@ if(APPLE)
 	set(APP_ICNS ./res/Icon.icns)
 	set_source_files_properties(${APP_ICNS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-	add_executable(HLMV MACOSX_BUNDLE ${FILE_SRC_MACOS} ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC} ${APP_ICNS})
+	add_executable(HLMV MACOSX_BUNDLE ${FILE_SRC_PLATFORM} ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC} ${APP_ICNS})
 
 	set_target_properties(HLMV PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in")
 	set_target_properties(HLMV PROPERTIES MACOSX_BUNDLE_ICON_FILE "Icon.icns")
@@ -112,9 +116,41 @@ if(APPLE)
 	set(CMAKE_INSTALL_PREFIX "/Applications")
 	install(TARGETS HLMV BUNDLE DESTINATION ".")
 elseif(WIN32)
-	add_executable(HLMV WIN32 ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
-	target_link_libraries(HLMV ${OPENGL_LIBRARY} Qt5::Core Qt5::Widgets Qt5::OpenGL)
+	add_executable(HLMV WIN32 ${FILE_SRC_PLATFORM} ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
+	qt5_use_modules(HLMV Core Widgets OpenGL WinExtras)
+	target_link_libraries(HLMV ${OPENGL_LIBRARY})
+
+	if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
+		set(CPACK_GENERATOR "NSIS")
+		set(CPACK_PACKAGE_NAME "Half-Life Model Viewer")
+		set(CPACK_PACKAGE_VENDOR "MoeMod")
+		set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-Win32-${CMAKE_SYSTEM_PROCESSOR}")
+		set(CPACK_PACKAGE_INSTALL_DIRECTORY "HLMV")
+		set(CPACK_PACKAGE_EXECUTABLES HLMV "${CPACK_PACKAGE_NAME}")
+		set(CPACK_CREATE_DESKTOP_LINKS HLMV)
+		set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+		set(CPACK_NSIS_MODIFY_PATH ON)
+		set(CPACK_NSIS_MUI_FINISHPAGE_RUN HLMV)
+
+		set(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+		set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+		add_custom_command(TARGET HLMV POST_BUILD COMMAND "${Qt5_DIR}/../../../bin/windeployqt" ARGS "${CMAKE_CURRENT_BINARY_DIR}/bin/HLMV.exe")
+		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin" DESTINATION ".")
+
+		include(CPack)
+		add_custom_target(HLMV_CPACK_NSIS 
+			COMMAND "echo" "Cleaning NSIS file" 
+			COMMAND "rd" "/s" "/q" "_CPack_Packages" "||" "echo" "Not Found, ignore..." 
+			COMMAND "cpack" "-V" 
+			DEPENDS HLMV COMMENT "Generating NSIS file")
+
+	else()
+		install(TARGETS HLMV DESTINATION ".")
+	endif()
+
+	set(CMAKE_INSTALL_PREFIX "D:/tools/${PROJECT_NAME}")
+
 else()
-	add_executable(HLMV ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
+	add_executable(HLMV ${FILE_SRC_PLATFORM} ${FILE_RES} ${FILE_UI} ${FILE_SRC} ${GEN_MOC} ${GEN_UIC} ${GEN_RCC})
 	target_link_libraries(HLMV ${OPENGL_LIBRARY} Qt5::Core Qt5::Widgets Qt5::OpenGL)
 endif()
