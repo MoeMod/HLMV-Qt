@@ -7,6 +7,8 @@
 #include <QVector3D>
 #include <QMouseEvent>
 #include <QTimer>
+#include <QGestureEvent>
+#include <QNativeGestureEvent>
 
 #include "ViewerSettings.h"
 
@@ -30,6 +32,8 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
 {
 	QObject::connect (&pimpl->m_Timer, SIGNAL (timeout ()), this, SLOT (idleEvent ()));
 	pimpl->m_Timer.start ();
+
+	grabGesture(Qt::PinchGesture);
 }
 
 MyOpenGLWidget::~MyOpenGLWidget() = default;
@@ -55,6 +59,33 @@ void MyOpenGLWidget::resizeGL(int w, int h)
 void MyOpenGLWidget::paintGL()
 {
 	pimpl->m_gldraw.Draw();
+}
+
+bool MyOpenGLWidget::event(QEvent *event)
+{
+	switch(event->type()){
+		case QEvent::Gesture:
+			gestureEvent(static_cast<QGestureEvent *>(event));
+			return true;
+		default:
+			break;
+	}
+	return QGLWidget::event(event);
+}
+
+void MyOpenGLWidget::gestureEvent(QGestureEvent *event)
+{
+	QPinchGesture *pinch = static_cast<QPinchGesture *>(event->gesture(Qt::PinchGesture));
+	if (pinch)
+	{
+		QPinchGesture::ChangeFlags changeFlags = pinch->changeFlags();
+		if (changeFlags & QPinchGesture::ScaleFactorChanged) {
+			qreal delta = pinch->scaleFactor();
+
+			g_viewerSettings.trans[2] /= delta * delta;
+		}
+	}
+	updateGL();
 }
 
 void MyOpenGLWidget::mousePressEvent(QMouseEvent *event)
@@ -97,8 +128,17 @@ void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void MyOpenGLWidget::wheelEvent(QWheelEvent *event)
 {
-	g_viewerSettings.trans[2] += event->delta();
-
+	if(event->source() == Qt::MouseEventSynthesizedBySystem)
+	{
+		// macOS touchpad
+		auto delta = event->pixelDelta();
+		g_viewerSettings.trans[0] -= delta.x();
+		g_viewerSettings.trans[1] += delta.y();
+	}
+	else
+	{
+		g_viewerSettings.trans[2] += event->delta();
+	}
 	updateGL();
 }
 

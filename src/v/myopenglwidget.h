@@ -3,6 +3,8 @@
 #include <QGL>
 #include <memory>
 
+class QGestureEvent;
+
 class MyOpenGLWidget : public QGLWidget
 {
 	Q_OBJECT
@@ -14,9 +16,13 @@ public:
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
+
+	bool event(QEvent *event) override;
 	void mousePressEvent(QMouseEvent *event) override;
 	void mouseMoveEvent(QMouseEvent *event) override;
 	void wheelEvent(QWheelEvent *event) override;
+
+	void gestureEvent(QGestureEvent *event);
 
 signals: // signals
 

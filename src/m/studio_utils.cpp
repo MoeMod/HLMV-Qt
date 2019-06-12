@@ -248,9 +248,8 @@ void StudioModel::LoadModelTexturesCSO( studiohdr_t *phdr, const char *texturePa
 				if(UploadTextureTGA(&ptexture[i], path.c_str(), g_texnum) || UploadTextureBMP(&ptexture[i], path.c_str(), g_texnum))
 				{
 					// ...
-					char buffer[64] = "*CSO*";
-					strcat(buffer, ptexture[i].name);
-					strcpy(ptexture[i].name, buffer);
+					char buffer[64] = "*CSO* ";
+					strcpy(ptexture[i].name, strcat(buffer, ptexture[i].name));
 				}
 				else
 				{
@@ -366,7 +365,7 @@ bool StudioModel::SaveModel ( const char *modelname )
 		if (phdr->textureindex > 0 && phdr->numtextures <= MAXSTUDIOSKINS) {
 			int n = phdr->numtextures;
 			for (int i = 0; i < n; i++) {
-				if(strncmp(ptexture[i].name, "*CSO*", 4) != 0)
+				if(strncmp(ptexture[i].name, "*CSO* ", 5) != 0)
 					continue;
 				// TODO : convert and save external texture
 #if 0
