@@ -19,11 +19,7 @@ QtGuiApplication1::QtGuiApplication1(QWidget *parent)
 	updateStatusBar("Drag model file to open");
 	setAcceptDrops(true);
 
-#ifdef Q_OS_MACOS
-	// Mac specific
-	SetupMacWindow();
-#endif
-
+	SetupPlatformWindow();
 }
 
 void QtGuiApplication1::OnActionOpen()

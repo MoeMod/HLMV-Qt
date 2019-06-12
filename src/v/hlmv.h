@@ -69,6 +69,10 @@ public:
 public:
 #ifdef Q_OS_MAC
 	void SetupMacWindow();
+	void SetupPlatformWindow() { SetupMacWindow(); }
+#elif defined(Q_OS_WIN32)
+	void SetupAeroWindow();
+	void SetupPlatformWindow() { SetupAeroWindow(); }
 #endif
 
 public:
