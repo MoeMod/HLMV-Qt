@@ -41,7 +41,7 @@ private:
 	int m_h;
 	int m_w2;
 	int m_h2;
-	std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<float>> m_PrevTime;
+	typename std::chrono::high_resolution_clock::time_point m_PrevTime;
 	int d_textureNames[2];
 	bool m_bStopPlaying;
 };

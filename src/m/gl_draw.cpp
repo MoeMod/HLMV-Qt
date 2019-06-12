@@ -66,13 +66,13 @@ static void drawFloor ()
 }
 void CHLMV_GL_Draw::Think()
 {
-	auto CurrTime = std::chrono::steady_clock::now();
-
 	g_studioModel.SetBlending (0, 0.0);
 	g_studioModel.SetBlending (1, 0.0);
 
+	auto CurrTime = std::chrono::high_resolution_clock::now();
+
 	if (!m_bStopPlaying)
-		g_studioModel.AdvanceFrame ((CurrTime - m_PrevTime).count() * g_viewerSettings.speedScale);
+		g_studioModel.AdvanceFrame (std::chrono::duration_cast<std::chrono::duration<float>>(CurrTime - m_PrevTime).count() * g_viewerSettings.speedScale);
 
 	m_PrevTime = CurrTime;
 }
@@ -388,8 +388,16 @@ void CHLMV_GL_Draw::Draw()
 
 	setupRenderMode ();
 
-	glCullFace (GL_FRONT);
-	g_studioModel.DrawModel ();
+	if (g_viewerSettings.vieworiginmode && g_viewerSettings.righthand)
+	{
+		glCullFace(GL_BACK);
+		g_studioModel.DrawModel();
+	}
+	else
+	{
+		glCullFace(GL_FRONT);
+		g_studioModel.DrawModel();
+	}
 
 	//
 	// draw ground
