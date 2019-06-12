@@ -73,6 +73,8 @@ public:
 #elif defined(Q_OS_WIN32)
 	void SetupAeroWindow();
 	void SetupPlatformWindow() { SetupAeroWindow(); }
+#else
+	void SetupPlatformWindow() { }
 #endif
 
 public:

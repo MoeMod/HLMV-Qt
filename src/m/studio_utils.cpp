@@ -19,6 +19,7 @@
 #include "StudioModel.h"
 #include "mod_decryptor.h"
 #include <algorithm>
+#include <memory>
 #include "TGAlib.h"
 #include "bmpread.h"
 

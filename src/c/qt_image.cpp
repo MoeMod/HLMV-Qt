@@ -4,6 +4,7 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <memory>
 
 QString getOpenFileImagePath(QWidget *parent, const QString &caption, const QString &dir)
 {
