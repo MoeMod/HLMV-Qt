@@ -97,21 +97,23 @@ if(APPLE)
 	target_link_libraries(HLMV "-framework AppKit")
 	target_link_libraries(HLMV ${OPENGL_LIBRARY})
 
-	set(CPACK_GENERATOR "DragNDrop")
-	set(CPACK_PACKAGE_VENDOR "MoeMod")
-	set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-macOS-${CMAKE_SYSTEM_PROCESSOR}")
-	set(CPACK_DMG_VOLUME_NAME "HLMV")
-	set(CPACK_DMG_FORMAT "UDBZ") #UDRW
-	set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/background.png")
-	set(CPACK_DMG_DS_STORE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/DS_Store")
-
 	if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
-		add_custom_command(TARGET HLMV POST_BUILD COMMAND "${Qt5_DIR}/../../../bin/macdeployqt" ARGS "${CMAKE_CURRENT_BINARY_DIR}/HLMV.app" "-always-overwrite")
-		add_custom_command(TARGET HLMV POST_BUILD COMMAND "cpack")
-	endif()
+		set(CPACK_GENERATOR "DragNDrop")
+		set(CPACK_PACKAGE_VENDOR "MoeMod")
+		set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-macOS-${CMAKE_SYSTEM_PROCESSOR}")
+		set(CPACK_DMG_VOLUME_NAME "HLMV")
+		set(CPACK_DMG_FORMAT "UDBZ") #UDRW
+		set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/background.png")
+		set(CPACK_DMG_DS_STORE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/DS_Store")
 
-	include(CPack)
-	include(CPackDMG)
+		add_custom_command(TARGET HLMV POST_BUILD COMMAND "${Qt5_DIR}/../../../bin/macdeployqt" ARGS "${CMAKE_CURRENT_BINARY_DIR}/HLMV.app" "-always-overwrite")
+
+		include(CPack)
+		include(CPackDMG)
+		add_custom_target(HLMV_CPACK_DMG
+				COMMAND "cpack"
+				DEPENDS HLMV COMMENT "Generating DMG file")
+	endif()
 
 	set(CMAKE_INSTALL_PREFIX "/Applications")
 	install(TARGETS HLMV BUNDLE DESTINATION ".")
