@@ -91,14 +91,17 @@ void MyOpenGLWidget::gestureEvent(QGestureEvent *event)
 	if (pinch)
 	{
 		QPinchGesture::ChangeFlags changeFlags = pinch->changeFlags();
-		if (changeFlags & QPinchGesture::ScaleFactorChanged) {
-			QPointF position_delta = pinch->centerPoint() - pinch->lastCenterPoint();
+		if (changeFlags & QPinchGesture::ScaleFactorChanged)
+		{
 			qreal scale_delta = pinch->scaleFactor();
-			qreal angle_delta = pinch->rotationAngle() - pinch->lastRotationAngle();
+			g_viewerSettings.trans[2] /= scale_delta * scale_delta;
+		}
 
+		if(changeFlags & QPinchGesture::CenterPointChanged)
+		{
+			QPointF position_delta = pinch->centerPoint() - pinch->lastCenterPoint();
 			g_viewerSettings.trans[0] -= position_delta.x() / 4;
 			g_viewerSettings.trans[1] += position_delta.y() / 4;
-			g_viewerSettings.trans[2] /= scale_delta * scale_delta;
 		}
 	}
 
