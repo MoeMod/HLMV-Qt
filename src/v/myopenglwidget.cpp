@@ -34,6 +34,8 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *parent) :
 	pimpl->m_Timer.start ();
 
 	grabGesture(Qt::PinchGesture);
+	//QApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTouchEvents, false);
+	//QApplication::setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, false);
 }
 
 MyOpenGLWidget::~MyOpenGLWidget() = default;
@@ -65,8 +67,17 @@ bool MyOpenGLWidget::event(QEvent *event)
 {
 	switch(event->type()){
 		case QEvent::Gesture:
+		{
 			gestureEvent(static_cast<QGestureEvent *>(event));
 			return true;
+		}
+		case QEvent::TouchBegin:
+		case QEvent::TouchUpdate:
+		case QEvent::TouchEnd:
+		{
+			touchEvent(static_cast<QTouchEvent *>(event));
+			return true;
+		}
 		default:
 			break;
 	}
@@ -75,35 +86,63 @@ bool MyOpenGLWidget::event(QEvent *event)
 
 void MyOpenGLWidget::gestureEvent(QGestureEvent *event)
 {
+	// 2-fingers on both touchpad and touchscreen
 	QPinchGesture *pinch = static_cast<QPinchGesture *>(event->gesture(Qt::PinchGesture));
 	if (pinch)
 	{
 		QPinchGesture::ChangeFlags changeFlags = pinch->changeFlags();
 		if (changeFlags & QPinchGesture::ScaleFactorChanged) {
-			qreal delta = pinch->scaleFactor();
+			QPointF position_delta = pinch->centerPoint() - pinch->lastCenterPoint();
+			qreal scale_delta = pinch->scaleFactor();
+			qreal angle_delta = pinch->rotationAngle() - pinch->lastRotationAngle();
 
-			g_viewerSettings.trans[2] /= delta * delta;
+			g_viewerSettings.trans[0] -= position_delta.x() / 4;
+			g_viewerSettings.trans[1] += position_delta.y() / 4;
+			g_viewerSettings.trans[2] /= scale_delta * scale_delta;
 		}
 	}
+
+	// 3-fingers
+	/*
+	QPanGesture *pan = static_cast<QPanGesture *>(event->gesture(Qt::PanGesture));
+	if (pan)
+	{
+		QPointF position_delta = pan->delta();
+		g_viewerSettings.trans[0] -= position_delta.x();
+		g_viewerSettings.trans[1] += position_delta.y();
+	}
+	*/
+
 	updateGL();
+}
+
+void MyOpenGLWidget::touchEvent(QTouchEvent *event)
+{
+	if (event->touchPoints().size() != 1)
+		return;
+
+	const QTouchEvent::TouchPoint &tp = event->touchPoints().first();
+	if (1)
+	{
+		auto delta = tp.pos() - tp.lastPos();
+		g_viewerSettings.rot[0] += delta.y();
+		g_viewerSettings.rot[1] += delta.x();
+		updateGL();
+	}
 }
 
 void MyOpenGLWidget::mousePressEvent(QMouseEvent *event)
 {
+	if (event->source() != Qt::MouseEventNotSynthesized)
+		return;
 	pimpl->m_LastMousePos = event->pos();
-}
-
-
-template<class T> void qNormalizeAngle(T &angle)
-{
-	while (angle < 0)
-		angle += 360 * 16;
-	while (angle > 360)
-		angle -= 360 * 16;
 }
 
 void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
+	if (event->source() != Qt::MouseEventNotSynthesized)
+		return;
+	
 	int dx = event->x() - pimpl->m_LastMousePos.x();
 	int dy = event->y() - pimpl->m_LastMousePos.y();
 
@@ -111,8 +150,6 @@ void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
 
 		g_viewerSettings.rot[0] += dy;
 		g_viewerSettings.rot[1] += dx;
-		qNormalizeAngle(dx);
-		qNormalizeAngle(dy);
 
 		updateGL();
 	}

@@ -4,6 +4,7 @@
 #include <memory>
 
 class QGestureEvent;
+class QTouchEvent;
 
 class MyOpenGLWidget : public QGLWidget
 {
@@ -23,6 +24,7 @@ public:
 	void wheelEvent(QWheelEvent *event) override;
 
 	void gestureEvent(QGestureEvent *event);
+	void touchEvent(QTouchEvent *event);
 
 signals: // signals
 
