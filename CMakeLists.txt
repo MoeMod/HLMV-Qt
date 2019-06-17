@@ -71,7 +71,10 @@ file(GLOB FILE_SRC
 		)
 
 if(APPLE)
-	set(FILE_SRC_PLATFORM src/v/platform/macos/MacWindow.mm)
+	set(FILE_SRC_PLATFORM
+			src/v/platform/macos/MacWindow.mm
+			src/v/platform/macos/Touchbar.mm
+			)
 endif()
 
 if(WIN32)

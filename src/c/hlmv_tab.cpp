@@ -15,5 +15,9 @@ void QtGuiApplication1::OnTabChanged(int n)
 		g_viewerSettings.yaw = 65.0f;
 		g_viewerSettings.vieworiginmode = false;
 	}
+#ifdef Q_OS_MAC
+	// update touchbar when tab changed
+	InstallTouchBar();
+#endif
 }
 

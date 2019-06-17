@@ -4,6 +4,7 @@ Optimized for macOS.
 
 # Features
 - [x] Customized UI on macOS
+- [x] Multi-Touch Bar support on macOS
 - [x] what the original HLMV does
 - [x] Import & Export with BMP/JPG/TIFF/PNG formats (with Qt)
 - [x] Screenshot to clipboard and/or image file

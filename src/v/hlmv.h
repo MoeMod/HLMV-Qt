@@ -69,7 +69,8 @@ public:
 public:
 #ifdef Q_OS_MAC
 	void SetupMacWindow();
-	void SetupPlatformWindow() { SetupMacWindow(); }
+	void InstallTouchBar();
+	void SetupPlatformWindow() { SetupMacWindow(); InstallTouchBar(); }
 #elif defined(Q_OS_WIN32)
 	void SetupAeroWindow();
 	void SetupPlatformWindow() { SetupAeroWindow(); }
