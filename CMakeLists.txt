@@ -100,23 +100,23 @@ if(APPLE)
 	target_link_libraries(HLMV "-framework AppKit")
 	target_link_libraries(HLMV ${OPENGL_LIBRARY})
 
-	if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
-		set(CPACK_GENERATOR "DragNDrop")
-		set(CPACK_PACKAGE_VENDOR "MoeMod")
-		set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-macOS-${CMAKE_SYSTEM_PROCESSOR}")
-		set(CPACK_DMG_VOLUME_NAME "HLMV")
-		set(CPACK_DMG_FORMAT "UDBZ") #UDRW
-		set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/background.png")
-		set(CPACK_DMG_DS_STORE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/DS_Store")
+	set(CPACK_GENERATOR "DragNDrop")
+	set(CPACK_PACKAGE_VENDOR "MoeMod")
+	set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-macOS-${CMAKE_SYSTEM_PROCESSOR}")
+	set(CPACK_DMG_VOLUME_NAME "HLMV")
+	set(CPACK_DMG_FORMAT "UDBZ") #UDRW
+	set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/background.png")
+	set(CPACK_DMG_DS_STORE "${CMAKE_SOURCE_DIR}/cmake/DragNDrop/DS_Store")
 
-		add_custom_command(TARGET HLMV POST_BUILD COMMAND "${Qt5_DIR}/../../../bin/macdeployqt" ARGS "${CMAKE_CURRENT_BINARY_DIR}/HLMV.app" "-always-overwrite")
+	add_custom_target(HLMV_macdeployqt
+			COMMAND "${Qt5_DIR}/../../../bin/macdeployqt" "${CMAKE_CURRENT_BINARY_DIR}/HLMV.app" "-always-overwrite"
+			DEPENDS HLMV COMMENT "Copying Qt runtime binaries")
 
-		include(CPack)
-		include(CPackDMG)
-		add_custom_target(HLMV_CPACK_DMG
-				COMMAND "cpack"
-				DEPENDS HLMV COMMENT "Generating DMG file")
-	endif()
+	include(CPack)
+	include(CPackDMG)
+	add_custom_target(HLMV_cpack_dmg
+			COMMAND "cpack"
+			DEPENDS HLMV HLMV_macdeployqt COMMENT "Generating DMG file")
 
 	set(CMAKE_INSTALL_PREFIX "/Applications")
 	install(TARGETS HLMV BUNDLE DESTINATION ".")
@@ -125,33 +125,31 @@ elseif(WIN32)
 	qt5_use_modules(HLMV Core Widgets OpenGL WinExtras)
 	target_link_libraries(HLMV ${OPENGL_LIBRARY})
 
-	if (NOT CMAKE_BUILD_TYPE MATCHES "Debug")
-		set(CPACK_GENERATOR "NSIS")
-		set(CPACK_PACKAGE_NAME "Half-Life Model Viewer")
-		set(CPACK_PACKAGE_VENDOR "MoeMod")
-		set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-Win32-${CMAKE_SYSTEM_PROCESSOR}")
-		set(CPACK_PACKAGE_INSTALL_DIRECTORY "HLMV")
-		set(CPACK_PACKAGE_EXECUTABLES HLMV "${CPACK_PACKAGE_NAME}")
-		set(CPACK_CREATE_DESKTOP_LINKS HLMV)
-		set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-		set(CPACK_NSIS_MODIFY_PATH ON)
-		set(CPACK_NSIS_MUI_FINISHPAGE_RUN HLMV)
+	set(CPACK_GENERATOR "NSIS")
+	set(CPACK_PACKAGE_NAME "Half-Life Model Viewer")
+	set(CPACK_PACKAGE_VENDOR "MoeMod")
+	set(CPACK_PACKAGE_FILE_NAME "HLMV-Qt-Win32-${CMAKE_SYSTEM_PROCESSOR}")
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY "HLMV")
+	set(CPACK_PACKAGE_EXECUTABLES HLMV "${CPACK_PACKAGE_NAME}")
+	set(CPACK_CREATE_DESKTOP_LINKS HLMV)
+	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+	set(CPACK_NSIS_MODIFY_PATH ON)
+	set(CPACK_NSIS_MUI_FINISHPAGE_RUN HLMV)
 
-		set(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
-		set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
-		add_custom_command(TARGET HLMV POST_BUILD COMMAND "${Qt5_DIR}/../../../bin/windeployqt" ARGS "${CMAKE_CURRENT_BINARY_DIR}/bin/HLMV.exe")
-		install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin" DESTINATION ".")
+	set(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+	set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+	add_custom_target(HLMV_windeployqt
+			COMMAND "${Qt5_DIR}/../../../bin/windeployqt" "${CMAKE_CURRENT_BINARY_DIR}/bin/HLMV.exe"
+			DEPENDS HLMV COMMENT "Copying Qt runtime binaries")
 
-		include(CPack)
-		add_custom_target(HLMV_CPACK_NSIS 
-			COMMAND "echo" "Cleaning NSIS file" 
-			COMMAND "rd" "/s" "/q" "_CPack_Packages" "||" "echo" "Not Found, ignore..." 
-			COMMAND "cpack" "-V" 
-			DEPENDS HLMV COMMENT "Generating NSIS file")
+	install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin" DESTINATION ".")
 
-	else()
-		install(TARGETS HLMV DESTINATION ".")
-	endif()
+	include(CPack)
+	add_custom_target(HLMV_cpack_nsis
+		COMMAND "echo" "Cleaning NSIS file"
+		COMMAND "rd" "/s" "/q" "_CPack_Packages" "||" "echo" "Not Found, ignore..."
+		COMMAND "cpack" "-V"
+		DEPENDS HLMV HLMV_windeployqt COMMENT "Generating NSIS file")
 
 	set(CMAKE_INSTALL_PREFIX "D:/tools/${PROJECT_NAME}")
 
