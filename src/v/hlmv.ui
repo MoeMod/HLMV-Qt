@@ -847,33 +847,40 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="lSequenceInfo1">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Sequence: #0
-Frames: 0
-FPS: 0
-Blends: 0
-# of events: 0</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::AutoText</enum>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-            </property>
-           </widget>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QLabel" name="lSequenceInfo1">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::AutoText</enum>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_editSeq">
+              <property name="text">
+               <string>Edit Sequence</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -895,6 +902,19 @@ Blends: 0
                    </property>
                   </widget>
                  </item>
+                 <item row="0" column="2" rowspan="2">
+                  <widget class="QLabel" name="lEventInfo">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="1" column="0">
                   <widget class="QCheckBox" name="cbPlaySound">
                    <property name="enabled">
@@ -905,16 +925,10 @@ Blends: 0
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="1" rowspan="2">
-                  <widget class="QLabel" name="lEventInfo">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
+                 <item row="2" column="0">
+                  <widget class="QPushButton" name="pushButton_editEvent">
                    <property name="text">
-                    <string>TextLabel</string>
+                    <string>Edit Events</string>
                    </property>
                   </widget>
                  </item>
@@ -1352,7 +1366,7 @@ in your model's QC file.</string>
      <x>0</x>
      <y>0</y>
      <width>600</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -1676,6 +1690,38 @@ in your model's QC file.</string>
    <signal>currentIndexChanged(int)</signal>
    <receiver>QtGuiApplication1Class</receiver>
    <slot>setEventInfo(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>294</x>
+     <y>238</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_editEvent</sender>
+   <signal>clicked()</signal>
+   <receiver>QtGuiApplication1Class</receiver>
+   <slot>editEvents()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>294</x>
+     <y>238</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>199</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_editSeq</sender>
+   <signal>clicked()</signal>
+   <receiver>QtGuiApplication1Class</receiver>
+   <slot>editSequence()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>294</x>
@@ -2272,6 +2318,8 @@ in your model's QC file.</string>
   <slot>OnSetAnimationCurrentFrame(int)</slot>
   <slot>OnSetAnimationFPS(double)</slot>
   <slot>setEventInfo(int)</slot>
+  <slot>editEvents()</slot>
+  <slot>editSequence()</slot>
   <slot>setMesh(int)</slot>
   <slot>setTextureCurrent(int)</slot>
   <slot>updateTextureFlags()</slot>

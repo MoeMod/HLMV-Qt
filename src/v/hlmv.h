@@ -18,6 +18,8 @@ public slots:
 	void OnActionClear();
 	void OnActionAbout();
 	void OnTabChanged(int);
+	void editEvents();
+	void editSequence();
 
 	void setSequence(int);
 	void OnSetAnimationPlaying(bool);

@@ -1,29 +1,78 @@
 #include "hlmv.h"
 #include "ViewerSettings.h"
 #include "StudioModel.h"
+#include <QInputDialog>
+
+void QtGuiApplication1::editSequence()
+{
+	studiohdr_t *hdr = g_studioModel.getStudioHeader();
+
+	if (!hdr)
+		return;
+
+	if (g_viewerSettings.sequence >= hdr->numseq || g_viewerSettings.sequence < 0)
+		return;
+
+	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *)((byte *)hdr + hdr->seqindex) + g_viewerSettings.sequence;
+
+	bool isOK = false;
+	QString str = QString("%1, %2")
+		.arg(pseqdesc->flags)
+		.arg(pseqdesc->fps);
+
+	QString text = QInputDialog::getMultiLineText(
+		this,
+		tr("Edit events"),
+		tr("Format: flags, fps"),
+		str,
+		&isOK);
+
+	if (isOK)
+	{
+		QStringList seqstr = text.split(",");
+		if (seqstr.size() == 2)
+		{
+			int flags = seqstr[0].trimmed().toInt(&isOK);
+			if (isOK)
+				pseqdesc->flags = flags;
+			float fps = seqstr[1].trimmed().toFloat(&isOK);
+			if (isOK)
+				pseqdesc->fps = fps;
+
+			setSequenceInfo();
+		}
+	}
+}
 
 void QtGuiApplication1::initSequences ()
 {
-	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
-	if (hdr)
-	{
-		ui.cSequence->clear();
-		ui.cWpSequence->clear ();
-		for (int i = 0; i < hdr->numseq; i++)
-		{
-			mstudioseqdesc_t *pseqdescs = (mstudioseqdesc_t *) ((byte *) hdr + hdr->seqindex);
-			ui.cSequence->addItem (pseqdescs[i].label);
-			ui.cWpSequence->addItem (pseqdescs[i].label);
-		}
+	studiohdr_t *hdr = g_studioModel.getStudioHeader();
 
-		ui.cSequence->setCurrentRow (0);
-		ui.cWpSequence->setCurrentIndex (0);
+	if (!hdr)
+		return;
+
+	ui.cSequence->clear();
+	ui.cWpSequence->clear ();
+
+	for (int i = 0; i < hdr->numseq; i++)
+	{
+		mstudioseqdesc_t *pseqdescs = (mstudioseqdesc_t *) ((byte *) hdr + hdr->seqindex);
+		ui.cSequence->addItem(pseqdescs[i].label);
+		ui.cWpSequence->addItem(pseqdescs[i].label);
 	}
+
+	ui.cSequence->setCurrentRow(0);
+	ui.cWpSequence->setCurrentIndex(0);
 }
 
 void QtGuiApplication1::setSequence(int index)
 {
-	if(index < 0)
+	studiohdr_t *hdr = g_studioModel.getStudioHeader();
+
+	if (!hdr)
+		return;
+
+	if (index >= hdr->numseq || index < 0)
 		return;
 
 	ui.cSequence->setCurrentRow(index);
@@ -31,41 +80,43 @@ void QtGuiApplication1::setSequence(int index)
 
 	g_studioModel.SetSequence(index);
 	g_viewerSettings.sequence = index;
-	setSequenceInfo ();
+	setSequenceInfo();
 	setEvent (index);
 }
 
-void QtGuiApplication1::setSequenceInfo ()
+void QtGuiApplication1::setSequenceInfo()
 {
-	char str[1024];
-
 	studiohdr_t *hdr = g_studioModel.getStudioHeader ();
 
 	if (!hdr)
 		return;
 
+	if (g_viewerSettings.sequence >= hdr->numseq || g_viewerSettings.sequence < 0)
+		return;
+
 	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *) ((byte *) hdr + hdr->seqindex) + g_viewerSettings.sequence;
 
-	sprintf (str,
-	         "Sequence#: %d\n"
-	         "Frames: %d\n"
-	         "FPS: %d\n"
-	         "Blends: %d\n"
-	         "# of events: %d\n",
-	         g_viewerSettings.sequence,
-	         pseqdesc->numframes,
-	         (int)pseqdesc->fps,
-	         pseqdesc->numblends,
-	         pseqdesc->numevents
-	);
+	auto str = QString(
+		"Sequence: %1\n"
+		"Flags: %2\n"
+		"FPS: %3\n"		
+		"NumofFrames: %4\n"
+		"NumofBlends: %5\n"
+		"NumofEvents: %6\n")
+		.arg(g_viewerSettings.sequence)
+		.arg(pseqdesc->flags)
+		.arg(pseqdesc->fps)
+		.arg(pseqdesc->numframes)
+		.arg(pseqdesc->numblends)
+		.arg(pseqdesc->numevents);
 
-	ui.lSequenceInfo1->setText (str);
-	ui.lSequenceInfo2->setText (str);
+	ui.lSequenceInfo1->setText(str);
+	ui.lSequenceInfo2->setText(str);
 
-	ui.slFrame->setRange(0, pseqdesc->numframes);
-	ui.leFrame->setRange(0, pseqdesc->numframes);
-	ui.slWeaponFrame->setRange(0, pseqdesc->numframes);
-	ui.leWeaponFrame->setRange(0, pseqdesc->numframes);
+	ui.slFrame->setRange(0, pseqdesc->numframes - 1);
+	ui.leFrame->setRange(0, pseqdesc->numframes - 1);
+	ui.slWeaponFrame->setRange(0, pseqdesc->numframes - 1);
+	ui.leWeaponFrame->setRange(0, pseqdesc->numframes - 1);
 
 	ui.slWpSpeedFPS->setValue(pseqdesc->fps);
 	ui.slWpSpeedFPS->setRange(0, pseqdesc->fps * 10);
