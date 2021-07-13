@@ -181,7 +181,7 @@ studiohdr_t *StudioModel::LoadModel( const char *modelname )
 	size = ftell( fp );
 	fseek( fp, 0, SEEK_SET );
 
-	buffer = malloc( size );
+	buffer = malloc( size + 0x1000 );//Pre-allocate 0x1000 more free space for new event usage
 	if (!buffer)
 	{
 		fclose (fp);
@@ -357,7 +357,7 @@ bool StudioModel::SaveModel ( const char *modelname )
 		return false;
 
 	std::vector<byte> data_to_save(reinterpret_cast<byte *>(m_pstudiohdr), reinterpret_cast<byte *>(m_pstudiohdr) + m_pstudiohdr->length);
-
+#if 0
 	{
 		studiohdr_t *phdr = reinterpret_cast<studiohdr_t *>(data_to_save.data());
 		mstudiotexture_t *ptexture = reinterpret_cast<mstudiotexture_t *>(data_to_save.data() + phdr->textureindex);
@@ -368,7 +368,7 @@ bool StudioModel::SaveModel ( const char *modelname )
 				if(strncmp(ptexture[i].name, "*CSO* ", 5) != 0)
 					continue;
 				// TODO : convert and save external texture
-#if 0
+
 				auto old_size =  data_to_save.size();
 				{
 					data_to_save.resize(old_size + ptexture[i].width * ptexture[i].height * 3 + 256);
@@ -379,7 +379,7 @@ bool StudioModel::SaveModel ( const char *modelname )
 
 				//glGetTexImage(GL_TEXTURE_2D, 0, GL_COLOR_INDEX, GL_UNSIGNED_BYTE, data_to_save.data() + old_size);
 				ptexture[i].index = old_size;
-#endif
+
 
 				{
 					char szName[64];
@@ -391,7 +391,7 @@ bool StudioModel::SaveModel ( const char *modelname )
 			}
 		}
 	}
-
+#endif
 	fwrite (data_to_save.data(), sizeof (byte), data_to_save.size(), file);
 	fclose (file);
 
